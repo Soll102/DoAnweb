@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block content %}
+<header class="hero">
+  <div class="hero-slides" id="hero-slides">
+    <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1800&q=80" class="active" alt="Bãi biển AZUREA">
+    <img src="https://images.unsplash.com/photo-1573843981267-be1999ff37cd?auto=format&fit=crop&w=1800&q=80" alt="Đảo Coral từ trên cao" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1540541338287-41700207dee6?auto=format&fit=crop&w=1800&q=80" alt="Resort ven biển lúc hoàng hôn" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1584132967334-10e028bd69f7?auto=format&fit=crop&w=1800&q=80" alt="Villa hồ bơi riêng" loading="lazy">
+  </div>
+  <div class="hero-overlay"></div>
+  <div class="container">
+    <span class="eyebrow">Nha Trang · Đảo Coral · Luxury 5 sao</span>
+    <h1>Ngủ giữa <em>đại dương</em>,<br>thức dậy cùng sóng xanh</h1>
+    <p class="lead">AZUREA ISLANDS — resort đảo và overwater villa đầu tiên tại Việt Nam. Hồ bơi vô cực, rạn san hô trước thềm phòng, quản gia riêng và bữa tối giữa biển sao.</p>
+    <div class="hero-cta">
+      <a class="btn btn-gold" href="/phong">Khám phá {{ stats.rooms }} Villa</a>
+      <a class="btn" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.4)" href="/lich-trong">Xem lịch trống</a>
+    </div>
+    <div class="hero-badges"><span>Hồ bơi vô cực</span><span>Đảo riêng Coral Cay</span><span>Overwater trên biển</span></div>
+    <div class="hero-dots" id="hero-dots"></div>
+    <form class="search-card" action="/phong" method="get">
+      <div><label>Tìm villa</label><input name="q" placeholder="VD: Ocean, Overwater..."></div>
+      <div><label>Hạng villa</label><select name="type"><option value="">Tất cả hạng</option><option>Ocean Villa</option><option>Coral Suite</option><option>Pearl Bungalow</option><option>Royal Penthouse</option></select></div>
+      <div><label>Số khách</label><select name="guests"><option value="">Bất kỳ</option><option value="2">2 khách</option><option value="4">4+ khách</option><option value="6">6 khách</option></select></div>
+      <div><label>Ngân sách tối đa</label><select name="max_price"><option value="">Không giới hạn</option><option value="3000000">≤ 3 triệu/đêm</option><option value="5000000">≤ 5 triệu/đêm</option><option value="9000000">≤ 9 triệu/đêm</option></select></div>
+      <button class="btn btn-navy">Tìm kiếm</button>
+    </form>
+  </div>
+</header>
+
+<svg class="wave-divider" viewBox="0 0 1440 70" preserveAspectRatio="none"><path d="M0,40 C240,80 480,0 720,30 C960,60 1200,10 1440,40 L1440,70 L0,70 Z" fill="#f7fafb"/></svg>
+
+<section class="section" style="padding-top:1rem"><div class="container">
+  <div class="stats-band reveal">
+    <div><b data-count="{{ stats.rooms }}">0</b><br>Hạng villa và suite</div>
+    <div><b data-count="{{ stats.guests }}">0</b><br>Lượt khách mỗi năm</div>
+    <div><b>{{ stats.rating }} / 5</b><br>Đánh giá trung bình</div>
+    <div><b>15 phút</b><br>Cano ra đảo riêng</div>
+  </div>
+</div></section>
+
+<section class="section" style="padding-top:0"><div class="container">
+  <div class="section-head reveal">
+    <div><div class="kicker">Signature Collection</div><h2>Villa được yêu thích nhất</h2></div>
+    <a class="btn btn-ghost btn-sm" href="/phong">Xem tất cả</a>
+  </div>
+  <div class="grid3">
+    {% for r in featured %}
+    <div class="card reveal {% if loop.index==2 %}d1{% elif loop.index==3 %}d2{% endif %}">
+      <div class="card-img"><img src="{{ r['image_url'] }}" alt="{{ r['name'] }}" loading="lazy"><span class="badge gold">{{ r['rating'] }} / 5</span></div>
+      <div class="card-body">
+        <small style="color:var(--teal);font-weight:700;letter-spacing:1px">{{ r['type']|upper }}</small>
+        <h3 style="margin:.2rem 0">{{ r['name'] }}</h3>
+        <div class="meta"><span><i>{{ r['capacity'] }}</i> khách</span><span><i>{{ r['size_m2'] }}m²</i> diện tích</span></div>
+        <p style="color:var(--muted);font-size:.9rem">{{ r['description'][:110] }}...</p>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.6rem">
+          <div class="price"><span>{{ r['price_per_night']|vnd }}</span>/đêm</div>
+          <a class="btn btn-navy btn-sm" href="/phong/{{ r['id'] }}">Chi tiết</a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div></section>
+
+<section class="section" style="background:linear-gradient(180deg,#eaf6f8,#fff);padding-top:2.5rem"><div class="container">
+  <div class="section-head reveal"><div><div class="kicker">Thư viện đại dương</div><h2>Một vòng quanh đảo</h2></div></div>
+  <div class="marquee reveal d1"><div class="marquee-track">
+    <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=70" alt="Bãi cát trắng" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=600&q=70" alt="Biển xanh" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1573843981267-be1999ff37cd?auto=format&fit=crop&w=600&q=70" alt="Đảo Coral" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1540541338287-41700207dee6?auto=format&fit=crop&w=600&q=70" alt="Resort hoàng hôn" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=600&q=70" alt="Villa hướng biển" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=600&q=70" alt="Hồ bơi resort" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1584132967334-10e028bd69f7?auto=format&fit=crop&w=600&q=70" alt="Biệt thự hồ bơi" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?auto=format&fit=crop&w=600&q=70" alt="Villa gia đình" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=70" alt="Bãi cát trắng" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=600&q=70" alt="Biển xanh" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1573843981267-be1999ff37cd?auto=format&fit=crop&w=600&q=70" alt="Đảo Coral" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1540541338287-41700207dee6?auto=format&fit=crop&w=600&q=70" alt="Resort hoàng hôn" loading="lazy">
+  </div></div>
+</div></section>
+
+<section class="section"><div class="container">
+  <div class="section-head reveal"><div><div class="kicker">Vì sao chọn AZUREA</div><h2>Trải nghiệm đại dương 5 sao</h2></div></div>
+  <div class="why">
+    <div class="why-card reveal"><img src="https://images.unsplash.com/photo-1573843981267-be1999ff37cd?auto=format&fit=crop&w=600&q=70" alt="Đảo riêng" loading="lazy"><div><h4>Đảo riêng Coral Cay</h4><p style="color:var(--muted);font-size:.9rem">Bãi biển cát trắng 2km, rạn san hô lặn ngay trước villa.</p></div></div>
+    <div class="why-card reveal d1"><img src="https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=600&q=70" alt="Hồ bơi vô cực" loading="lazy"><div><h4>Hồ bơi vô cực</h4><p style="color:var(--muted);font-size:.9rem">3 hồ bơi tràn bờ view biển và 1 rooftop panorama.</p></div></div>
+    <div class="why-card reveal d2"><img src="https://images.unsplash.com/photo-1540541338287-41700207dee6?auto=format&fit=crop&w=600&q=70" alt="Trợ lý Marina" loading="lazy"><div><h4>Trợ lý Marina 24/7</h4><p style="color:var(--muted);font-size:.9rem">Chatbot chăm sóc khách hàng, trả lời giá và lịch trống tức thì.</p></div></div>
+    <div class="why-card reveal d3"><img src="https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=600&q=70" alt="Quản gia riêng" loading="lazy"><div><h4>Quản gia riêng</h4><p style="color:var(--muted);font-size:.9rem">Concierge và cano đưa đón miễn phí, check-in trong 2 phút.</p></div></div>
+  </div>
+</div></section>
+
+<section class="section" style="padding-top:0"><div class="container">
+  <div class="section-head reveal"><div><div class="kicker">Lịch trống thời gian thực</div><h2>Đặt phòng trong 1 phút</h2></div><a class="btn btn-ghost btn-sm" href="/lich-trong">Mở lịch</a></div>
+  <div class="grid2">
+    <div class="card reveal-left"><div class="card-body">
+      <h3>1. Xem lịch trống</h3><p style="color:var(--muted)">Chọn villa và tháng, ô màu vàng là đã kín. Minh bạch 100%.</p>
+      <h3>2. Đặt và nhận mã AZ-XXXXXX</h3><p style="color:var(--muted)">Chỉ cọc 30%, còn lại trả khi nhận phòng. Mã AZUREA10 giảm 10%.</p>
+      <h3>3. Marina đồng hành</h3><p style="color:var(--muted)">Hỏi giá, tour đảo, giờ check-in ngay góc phải màn hình.</p>
+      <a class="btn btn-gold" href="/phong">Bắt đầu đặt phòng</a>
+    </div></div>
+    <figure class="feature-photo reveal-right" style="margin:0">
+      <img src="https://images.unsplash.com/photo-1573843981267-be1999ff37cd?auto=format&fit=crop&w=1200&q=80" alt="Đảo Coral" loading="lazy">
+      <figcaption>Vịnh Coral — cano ra đảo riêng chỉ 15 phút, mỗi giờ một chuyến</figcaption>
+    </figure>
+  </div>
+  <div class="grid3" style="margin-top:1.2rem">
+    <figure class="feature-photo reveal" style="margin:0;min-height:220px"><img src="https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=800&q=70" alt="Bãi biển" loading="lazy"><figcaption>Bãi Dài cát trắng 2km</figcaption></figure>
+    <figure class="feature-photo reveal d1" style="margin:0;min-height:220px"><img src="https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=70" alt="Suite hoàng hôn" loading="lazy"><figcaption>Suite ngắm hoàng hôn đẹp nhất đảo</figcaption></figure>
+    <figure class="feature-photo reveal d2" style="margin:0;min-height:220px"><img src="https://images.unsplash.com/photo-1602002418082-a44cf89dadaf?auto=format&fit=crop&w=800&q=70" alt="Ẩm thực biển" loading="lazy"><figcaption>Bữa tối hải sản trên bãi biển</figcaption></figure>
+  </div>
+</div></section>
+
+<section class="section" style="padding-top:0"><div class="container">
+  <div class="section-head reveal"><div><div class="kicker">Du khách kể</div><h2>Đánh giá từ biển xanh</h2></div></div>
+  <div class="grid3">
+    {% for rv in reviews %}
+    <div class="card reveal {% if loop.index==2 %}d1{% elif loop.index==3 %}d2{% endif %}"><div class="card-body">
+      <div style="color:#e8a100;letter-spacing:2px">★★★★★</div>
+      <p><i>"{{ rv['comment'] }}"</i></p>
+      <small style="color:var(--muted)">— {{ rv['user_name'] }} · {{ rv['room_name'] }}</small>
+    </div></div>
+    {% endfor %}
+  </div>
+</div></section>
+{% endblock %}

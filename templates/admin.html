@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard — AZUREA{% endblock %}
+{% block content %}
+<div class="container section">
+  <div class="kicker">Admin Dashboard</div><h1>Tổng quan resort</h1>
+  <div class="stats-band reveal visible">
+    <div><b>{{ stats.revenue|vnd }}</b><br>Doanh thu (xác nhận)</div>
+    <div><b>{{ stats.bookings }}</b><br>Tổng đơn đặt</div>
+    <div><b>{{ stats.pending }}</b><br>Đơn chờ xử lý</div>
+    <div><b>{{ stats.rooms }}</b><br>Villa đang bán</div>
+  </div>
+
+  <h2 style="margin-top:2rem">Biểu đồ kinh doanh</h2>
+  <div class="grid2">
+    <div class="card reveal visible"><div class="card-body">
+      <h3 style="margin-top:0">Doanh thu 14 ngày qua</h3>
+      <div style="height:260px"><canvas id="ch-rev"></canvas></div>
+    </div></div>
+    <div class="card reveal visible d1"><div class="card-body">
+      <h3 style="margin-top:0">Đơn theo trạng thái</h3>
+      <div style="height:260px"><canvas id="ch-status"></canvas></div>
+    </div></div>
+    <div class="card reveal visible"><div class="card-body">
+      <h3 style="margin-top:0">Lượt đặt và doanh thu từng villa</h3>
+      <div style="height:330px"><canvas id="ch-room"></canvas></div>
+    </div></div>
+    <div class="card reveal visible d1"><div class="card-body">
+      <h3 style="margin-top:0">Đơn 6 tháng gần nhất</h3>
+      <div style="height:280px"><canvas id="ch-month"></canvas></div>
+    </div></div>
+  </div>
+
+  <h2 style="margin-top:2rem">Đơn đặt mới nhất</h2>
+  <div style="overflow:auto"><table class="table">
+    <tr><th>Mã</th><th>Khách</th><th>Villa</th><th>Ngày</th><th>Tổng</th><th>Trạng thái</th><th>Đổi</th></tr>
+    {% for b in bookings %}<tr>
+      <td><b>{{ b['booking_code'] }}</b><br><small>{{ b['phone'] }}</small></td>
+      <td>{{ b['full_name'] }}</td><td>{{ b['room_name'] }}</td>
+      <td>{{ b['check_in'] }} → {{ b['check_out'] }}</td><td>{{ b['total_price']|vnd }}</td>
+      <td><span class="pill {{ b['status'] }}">{{ b['status'] }}</span></td>
+      <td><form action="/admin/booking/{{ b['id'] }}/status" method="post" style="display:flex;gap:.3rem">
+        <select name="status"><option value="pending" {% if b['status']=='pending' %}selected{% endif %}>pending</option><option value="confirmed" {% if b['status']=='confirmed' %}selected{% endif %}>confirmed</option><option value="completed" {% if b['status']=='completed' %}selected{% endif %}>completed</option><option value="cancelled" {% if b['status']=='cancelled' %}selected{% endif %}>cancelled</option></select>
+        <button class="btn btn-navy btn-sm">Lưu</button></form></td>
+    </tr>{% endfor %}
+  </table></div>
+  <div class="grid2" style="margin-top:1.5rem">
+    <div><h2>Villa</h2><table class="table"><tr><th>Villa</th><th>Giá/đêm</th><th>Hiển thị</th></tr>
+    {% for r in rooms %}<tr><td>{{ r['name'] }}</td><td>{{ r['price_per_night']|vnd }}</td>
+    <td><form action="/admin/room/toggle/{{ r['id'] }}" method="post"><button class="btn btn-ghost btn-sm">{{ 'Đang hiện' if r['is_active'] else 'Đang ẩn' }}</button></form></td></tr>{% endfor %}</table>
+    <h2 style="margin-top:1.5rem">Doanh thu 7 ngày qua</h2>
+    <table class="table"><tr><th>Ngày</th><th>Doanh thu</th></tr>{% for r in rev7 %}<tr><td>{{ r['d'] }}</td><td>{{ r['s']|vnd }}</td></tr>{% else %}<tr><td colspan="2">Chưa có dữ liệu.</td></tr>{% endfor %}</table></div>
+    <div><h2>Liên hệ ({{ contacts|length }})</h2>
+    {% for c in contacts %}<div class="card" style="margin-bottom:.6rem"><div class="card-body"><b>{{ c['name'] }}</b> <small>({{ c['email'] }} · {{ c['phone'] }})</small><br><i>{{ c['subject'] }}</i><p>{{ c['message'] }}</p></div></div>{% else %}<p>Chưa có liên hệ nào.</p>{% endfor %}</div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function(){
+  if(typeof Chart === 'undefined') return;
+  Chart.defaults.font.family = "'Be Vietnam Pro', sans-serif";
+  const short = v => v >= 1e9 ? (v/1e9).toFixed(1)+' tỷ' : v >= 1e6 ? (v/1e6).toFixed(1)+'tr' : v >= 1e3 ? Math.round(v/1e3)+'k' : v;
+  const NAVY='#07354f', TEAL='#14b8a6', GOLD='#c9a86a', AQUA='#38e1d4';
+
+  new Chart(document.getElementById('ch-rev'), {type:'bar',
+    data:{labels:{{ chart.rev_labels|tojson }}, datasets:[{label:'Doanh thu (đ)', data:{{ chart.rev_data|tojson }}, backgroundColor:TEAL, borderRadius:8}]},
+    options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{callbacks:{label:c=>' '+Number(c.raw).toLocaleString('vi-VN')+' đ'}}},
+      scales:{y:{ticks:{callback:short}}, x:{grid:{display:false}}}}});
+
+  const stColors = {{ chart.status_labels|tojson }}.map(s => s==='confirmed' ? '#22c55e' : s==='pending' ? '#eab308' : s==='completed' ? '#3b82f6' : '#ef4444');
+  new Chart(document.getElementById('ch-status'), {type:'doughnut',
+    data:{labels:{{ chart.status_labels|tojson }}, datasets:[{data:{{ chart.status_data|tojson }}, backgroundColor:stColors, borderWidth:3, borderColor:'#fff'}]},
+    options:{responsive:true, maintainAspectRatio:false, cutout:'58%', plugins:{legend:{position:'bottom'}}}});
+
+  new Chart(document.getElementById('ch-room'), {type:'bar',
+    data:{labels:{{ chart.room_labels|tojson }}, datasets:[
+      {label:'Lượt đặt', data:{{ chart.room_counts|tojson }}, backgroundColor:GOLD, borderRadius:8, xAxisID:'x'},
+      {label:'Doanh thu (đ)', data:{{ chart.room_revenue|tojson }}, backgroundColor:NAVY, borderRadius:8, xAxisID:'x1'}]},
+    options:{indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+(c.dataset.xAxisID==='x1'?Number(c.raw).toLocaleString('vi-VN')+' đ':c.raw)}}},
+      scales:{
+        x:{type:'linear', position:'bottom', title:{display:true, text:'Lượt đặt (đơn)'}, ticks:{precision:0}, grid:{display:false}},
+        x1:{type:'linear', position:'top', title:{display:true, text:'Doanh thu (đ)'}, ticks:{callback:short}, grid:{drawOnChartArea:false}}
+      }}});
+
+  const ctx = document.getElementById('ch-month').getContext('2d');
+  const grad = ctx.createLinearGradient(0,0,0,260); grad.addColorStop(0,'rgba(20,184,166,.35)'); grad.addColorStop(1,'rgba(20,184,166,0)');
+  new Chart(ctx, {type:'line',
+    data:{labels:{{ chart.month_labels|tojson }}, datasets:[{label:'Số đơn', data:{{ chart.month_data|tojson }}, borderColor:TEAL, backgroundColor:grad, fill:true, tension:.4, pointBackgroundColor:NAVY, pointRadius:5}]},
+    options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true, ticks:{precision:0}}}}});
+})();
+</script>
+{% endblock %}

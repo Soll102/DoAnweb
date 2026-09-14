@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Liên hệ — AZUREA{% endblock %}
+{% block content %}
+<div class="container section">
+  <div class="page-banner reveal visible">
+    <img class="bg" src="https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=1600&q=75" alt="Liên hệ">
+    <div class="shade"></div>
+    <div class="inner"><div class="kicker" style="color:var(--gold-l)">Concierge 24/7</div><h1 style="margin:.2rem 0">Liên hệ AZUREA</h1><p style="color:#e6f3f7;margin:0">Phản hồi trong 10 phút, mọi khung giờ.</p></div>
+  </div>
+  <div class="split">
+  <form class="form reveal visible" method="post"><h2 style="margin-top:0">Gửi lời nhắn</h2>
+    <div class="form-row"><div><label>Họ tên *</label><input name="name" required></div><div><label>SĐT</label><input name="phone"></div></div>
+    <div><label>Email *</label><input name="email" type="email" required></div>
+    <div><label>Chủ đề</label><select name="subject"><option>Tư vấn đặt phòng</option><option>Tour đảo và dịch vụ</option><option>Tiệc cưới / sự kiện</option><option>Hợp tác doanh nghiệp</option></select></div>
+    <div><label>Lời nhắn *</label><textarea name="message" rows="4" required placeholder="Bạn cần hỗ trợ gì?"></textarea></div>
+    <button class="btn btn-gold" style="margin-top:.6rem">Gửi lời nhắn</button>
+  </form>
+  <div class="reveal visible d1"><div class="card"><div class="card-img" style="height:180px"><img src="https://images.unsplash.com/photo-1573843981267-be1999ff37cd?auto=format&fit=crop&w=800&q=70" alt="Resort"></div><div class="card-body">
+    <h3>AZUREA ISLANDS Resort</h3><p>Bãi Dài, đảo Coral, Nha Trang, Khánh Hòa<br>Hotline: <b>1900 6868</b> (24/7, miễn phí)<br>Zalo: 0909 888 999<br>hello@azurea.vn</p>
+    <p>Lễ tân: 24/7<br>Cano ra đảo: mỗi giờ 7:00–21:00<br>Nhà hàng Ocean Pearl: 6:30–22:30</p>
+    <iframe title="map" src="https://www.google.com/maps?q=Nha+Trang&output=embed" style="width:100%;height:220px;border:0;border-radius:12px" loading="lazy"></iframe>
+  </div></div></div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Đăng ký — AZUREA{% endblock %}
+{% block content %}
+<div class="container section" style="max-width:480px">
+<form class="form reveal visible" method="post"><div style="text-align:center"><span class="logo-mark" style="display:inline-grid;width:64px;height:64px" aria-hidden="true"><svg viewBox="0 0 48 48"><defs><linearGradient id="lgSea3" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#159a8c"/><stop offset=".55" stop-color="#0b4a6b"/><stop offset="1" stop-color="#021826"/></linearGradient><linearGradient id="lgGold3" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#e8cf9a"/><stop offset="1" stop-color="#c9a86a"/></linearGradient></defs><circle cx="24" cy="24" r="23" fill="url(#lgSea3)"/><circle cx="15" cy="12" r="7" fill="#ffffff" opacity=".08"/><circle cx="30" cy="14" r="5.5" fill="url(#lgGold3)"/><circle cx="30" cy="14" r="8.5" fill="none" stroke="url(#lgGold3)" stroke-width="1" opacity=".45"/><path d="M6 27c4.5-3.2 8.5-3.2 13 0s8.5 3.2 13 0 6.5-2.4 10-.8" stroke="#ffffff" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M6 34c4.5-3.2 8.5-3.2 13 0s8.5 3.2 13 0 6.5-2.4 10-.8" stroke="#38e1d4" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M11 41c3.5-2.4 6.5-2.4 10 0s6.5 2.4 10 0 4.5-1.8 7-.8" stroke="url(#lgGold3)" stroke-width="2.4" fill="none" stroke-linecap="round" opacity=".9"/></svg></span></div><h2 style="text-align:center">Gia nhập AZUREA</h2>
+<label>Họ tên</label><input name="name" required placeholder="Nguyễn Văn A">
+<label>Email</label><input name="email" type="email" required>
+<label>SĐT</label><input name="phone">
+<label>Mật khẩu</label><input name="password" type="password" required minlength="4">
+<button class="btn btn-gold" style="width:100%;justify-content:center;margin-top:.8rem">Đăng ký</button>
+<p style="text-align:center">Đã có tài khoản? <a href="/dang-nhap">Đăng nhập</a></p>
+</form></div>
+{% endblock %}

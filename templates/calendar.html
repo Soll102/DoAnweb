@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Lịch trống — AZUREA{% endblock %}
+{% block content %}
+<div class="container section">
+  <div class="page-banner reveal visible">
+    <img class="bg" src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&q=75" alt="Lịch trống">
+    <div class="shade"></div>
+    <div class="inner"><div class="kicker" style="color:var(--gold-l)">Minh bạch thời gian thực</div><h1 style="margin:.2rem 0">Lịch trống villa</h1><p style="color:#e6f3f7;margin:0">Dữ liệu cập nhật trực tiếp từ hệ thống đặt phòng.</p></div>
+  </div>
+  <p style="color:var(--muted)"><span class="legend-dot" style="background:#fff;border:1.5px solid #cbdde3"></span> Còn trống &nbsp; <span class="legend-dot" style="background:linear-gradient(135deg,#f9e7b8,#ecd189);border:1px solid var(--gold)"></span> Đã có khách</p>
+  <form class="form reveal visible" method="get" style="display:grid;grid-template-columns:2fr 1fr auto;gap:.7rem;margin-bottom:1.2rem">
+    <div><label>Villa</label><select name="room_id">{% for r in rooms %}<option value="{{ r['id'] }}" {% if r['id']==room_id %}selected{% endif %}>{{ r['name'] }} — {{ r['price_per_night']|vnd }}/đêm</option>{% endfor %}</select></div>
+    <div><label>Tháng</label><input type="month" name="month" value="{{ month_str }}"></div>
+    <button class="btn btn-navy">Xem</button>
+  </form>
+  {% if room %}
+  <div class="card reveal visible"><div class="card-body" style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
+    <img src="{{ room['image_url'] }}" style="width:180px;height:110px;object-fit:cover;border-radius:12px" alt="{{ room['name'] }}">
+    <div><h3 style="margin:0">{{ room['name'] }}</h3><small style="color:var(--muted)">Tháng {{ "%02d"|format(month) }}/{{ year }} · {{ booked|length }} đêm đã kín</small></div>
+    <a class="btn btn-gold btn-sm" style="margin-left:auto" href="/dat-phong/{{ room['id'] }}">Đặt villa này</a>
+  </div></div>
+  <div class="card reveal visible" style="margin-top:1rem"><div class="card-body">
+    <h3 style="text-align:center">Tháng {{ "%02d"|format(month) }} / {{ year }}</h3>
+    <div class="cal-grid">
+      {% for d in ['T2','T3','T4','T5','T6','T7','CN'] %}<div class="cal-dow">{{ d }}</div>{% endfor %}
+      {% for day in range(1, 32) %}
+        {% set ok = true %}
+        {% if month in [2] and day > 29 %}{% set ok=false %}{% elif month in [4,6,9,11] and day > 30 %}{% set ok=false %}{% endif %}
+        {% if ok %}
+          {% set ds = "%04d-%02d-%02d"|format(year, month, day) %}
+          <div class="cal-day {% if ds in booked %}booked{% endif %} {% if ds == today %}today{% endif %}"><b>{{ day }}</b><br>{% if ds in booked %}Đã kín{% else %}Còn trống{% endif %}</div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+  <div class="g-grid reveal" style="margin-top:1.2rem">
+    <div class="g-item"><img src="https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=600&q=70" alt="Bãi biển" loading="lazy"><span>Bãi Dài</span></div>
+    <div class="g-item"><img src="https://images.unsplash.com/photo-1573843981267-be1999ff37cd?auto=format&fit=crop&w=600&q=70" alt="Đảo" loading="lazy"><span>Vịnh Coral</span></div>
+    <div class="g-item"><img src="https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=600&q=70" alt="Hồ bơi" loading="lazy"><span>Hồ bơi vô cực</span></div>
+    <div class="g-item"><img src="https://images.unsplash.com/photo-1540541338287-41700207dee6?auto=format&fit=crop&w=600&q=70" alt="Hoàng hôn" loading="lazy"><span>Hoàng hôn</span></div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

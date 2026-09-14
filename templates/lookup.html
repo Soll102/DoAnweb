@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Tra cứu đặt phòng — AZUREA{% endblock %}
+{% block content %}
+<div class="container section" style="max-width:820px">
+  <div class="kicker">My Bookings</div><h1>Tra cứu và quản lý đặt phòng</h1>
+  <figure class="feature-photo reveal visible" style="min-height:200px;margin:0 0 1.2rem"><img src="https://images.unsplash.com/photo-1540541338287-41700207dee6?auto=format&fit=crop&w=1400&q=70" alt="AZUREA resort" loading="lazy"><figcaption>Giữ mã AZ-XXXXXX để làm thủ tục nhận phòng trong 2 phút</figcaption></figure>
+  <form class="form reveal visible" method="post" style="display:grid;grid-template-columns:1fr 1fr auto;gap:.7rem">
+    <div><label>Mã đặt phòng (AZ-XXXXXX)</label><input name="code" value="{{ code }}" placeholder="VD: AZ-ABC123" style="text-transform:uppercase"></div>
+    <div><label>SĐT lúc đặt (để hủy)</label><input name="phone" placeholder="Nhập SĐT để xác nhận hủy"></div>
+    <button class="btn btn-navy">Tra cứu</button>
+  </form>
+  {% if result %}
+  <div class="card reveal visible" style="margin-top:1rem"><div class="card-body">
+    <h3>Đơn {{ result['booking_code'] }} — <span class="pill {{ result['status'] }}">{{ result['status'] }}</span></h3>
+    <p><b>{{ result['room_name'] }}</b> · {{ result['check_in'] }} đến {{ result['check_out'] }} · {{ result['guests'] }} khách<br>{{ result['full_name'] }} · {{ result['phone'] }}<br>Tổng: <b>{{ result['total_price']|vnd }}</b></p>
+    {% if result['status'] != 'cancelled' %}
+    <form action="/huy-dat-phong/{{ result['booking_code'] }}" method="post" style="display:flex;gap:.5rem" onsubmit="return confirm('Bạn chắc chắn muốn hủy đơn này?')">
+      <input name="phone" placeholder="Nhập lại SĐT để xác nhận hủy" required style="flex:1;padding:.6rem;border-radius:10px;border:1.5px solid #dbe7ed">
+      <button class="btn btn-ghost">Hủy đơn</button>
+    </form>
+    {% endif %}
+  </div></div>
+  {% endif %}
+  {% if mine %}
+  <h3 style="margin-top:1.5rem">Lịch sử đặt của bạn ({{ mine|length }})</h3>
+  <table class="table"><tr><th>Mã</th><th>Villa</th><th>Ngày</th><th>Tổng</th><th>Trạng thái</th></tr>
+  {% for b in mine %}<tr><td><a href="/tra-cuu?code={{ b['booking_code'] }}"><b>{{ b['booking_code'] }}</b></a></td><td>{{ b['room_name'] }}</td><td>{{ b['check_in'] }} → {{ b['check_out'] }}</td><td>{{ b['total_price']|vnd }}</td><td><span class="pill {{ b['status'] }}">{{ b['status'] }}</span></td></tr>{% endfor %}</table>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}{{ room['name'] }} — AZUREA{% endblock %}
+{% block content %}
+<div class="container section">
+  <a href="/phong">Tất cả villa</a>
+  <div class="detail-hero" style="margin-top:1rem">
+    <div class="reveal visible">
+      <img id="main-img" class="detail-main-img" src="{{ room['image_url'] }}" alt="{{ room['name'] }}">
+      <div class="thumbs">
+        <img src="{{ room['image_url'] }}" class="active" alt="Ảnh 1" onclick="swapImg(this)">
+        <img src="https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=800&q=70" alt="Hồ bơi" loading="lazy" onclick="swapImg(this)">
+        <img src="https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=800&q=70" alt="Bãi biển" loading="lazy" onclick="swapImg(this)">
+      </div>
+      <div class="g-grid" style="margin-top:.8rem">
+        <div class="g-item"><img src="https://images.unsplash.com/photo-1573843981267-be1999ff37cd?auto=format&fit=crop&w=600&q=70" alt="Đảo" loading="lazy"><span>Vịnh Coral</span></div>
+        <div class="g-item"><img src="https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=600&q=70" alt="Suite" loading="lazy"><span>Suite hoàng hôn</span></div>
+        <div class="g-item"><img src="https://images.unsplash.com/photo-1540541338287-41700207dee6?auto=format&fit=crop&w=600&q=70" alt="Hoàng hôn" loading="lazy"><span>Hoàng hôn</span></div>
+        <div class="g-item"><img src="https://images.unsplash.com/photo-1584132967334-10e028bd69f7?auto=format&fit=crop&w=600&q=70" alt="Hồ bơi villa" loading="lazy"><span>Hồ bơi riêng</span></div>
+      </div>
+    </div>
+    <div class="reveal visible d1">
+      <div class="kicker">{{ room['type'] }}</div>
+      <h1 style="margin:.2rem 0">{{ room['name'] }}</h1>
+      <div style="color:#e8a100;letter-spacing:2px">{{ room['rating'] }} / 5 <span style="color:var(--muted);letter-spacing:0">· 128 đánh giá</span></div>
+      <div class="meta"><span>Tối đa <i>{{ room['capacity'] }}</i> khách (+2 giường phụ)</span><span><i>{{ room['size_m2'] }}m²</i></span></div>
+      <p>{{ room['description'] }}</p>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin:.8rem 0">{% for a in amenities %}<span class="amen"><i>·</i> {{ a }}</span>{% endfor %}</div>
+      <div class="card"><div class="card-body" style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
+        <div><small style="color:var(--muted)">Giá chỉ từ</small><div class="price"><span style="font-size:1.8rem">{{ room['price_per_night']|vnd }}</span>/đêm</div><small style="color:var(--teal)">Đã gồm buffet sáng và cano đảo</small></div>
+        <div style="display:flex;flex-direction:column;gap:.5rem"><a class="btn btn-gold" href="/dat-phong/{{ room['id'] }}">Đặt phòng ngay</a><a class="btn btn-ghost btn-sm" href="/lich-trong?room_id={{ room['id'] }}">Xem lịch trống</a></div>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="split" style="margin-top:2rem">
+    <div class="reveal">
+      <h2>Đánh giá du khách ({{ reviews|length }})</h2>
+      {% for rv in reviews %}<div class="card" style="margin-bottom:.8rem"><div class="card-body">
+        <b>{{ rv['user_name'] }}</b> <span style="color:#e8a100;letter-spacing:2px">{% for i in range(rv['rating']) %}★{% endfor %}</span>
+        <p style="margin:.3rem 0"><i>"{{ rv['comment'] }}"</i></p><small style="color:var(--muted)">{{ rv['created_at'] }}</small>
+      </div></div>{% else %}<p>Chưa có đánh giá. Hãy là người đầu tiên!</p>{% endfor %}
+      <form class="form" action="/danh-gia" method="post" style="margin-top:1rem">
+        <h3>Viết đánh giá</h3>
+        <input type="hidden" name="room_id" value="{{ room['id'] }}">
+        <div class="form-row"><div><label>Tên bạn</label><input name="user_name" placeholder="VD: Thu Hà"></div>
+        <div><label>Điểm</label><select name="rating"><option value="5">5 / 5</option><option value="4">4 / 5</option><option value="3">3 / 5</option><option value="2">2 / 5</option><option value="1">1 / 5</option></select></div></div>
+        <label>Cảm nhận</label><textarea name="comment" rows="3" placeholder="Kể về kỳ nghỉ của bạn..."></textarea>
+        <button class="btn btn-navy" style="margin-top:.6rem">Gửi đánh giá</button>
+      </form>
+    </div>
+    <div class="reveal d1">
+      <h3>Villa khác cho bạn</h3>
+      {% for o in others %}<div class="card" style="margin-bottom:.8rem"><div class="card-img" style="height:140px"><img src="{{ o['image_url'] }}" loading="lazy" alt="{{ o['name'] }}"></div>
+      <div class="card-body"><b>{{ o['name'] }}</b><div class="price"><span>{{ o['price_per_night']|vnd }}</span>/đêm</div><a class="btn btn-ghost btn-sm" href="/phong/{{ o['id'] }}">Xem</a></div></div>{% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function swapImg(el){
+  document.getElementById('main-img').src = el.src.replace('w=800','w=1200');
+  document.querySelectorAll('.thumbs img').forEach(i=>i.classList.remove('active'));
+  el.classList.add('active');
+}
+</script>
+{% endblock %}

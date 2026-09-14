@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}AZUREA ISLANDS — Resort Biển & Đảo Luxury{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'><circle cx='24' cy='24' r='23' fill='%2304263b'/><circle cx='24' cy='24' r='22' fill='none' stroke='%23c9a86a' stroke-width='2'/><circle cx='30' cy='15' r='5' fill='%23e8cf9a'/><path d='M7 28c4-3 8-3 12 0s8 3 12 0 7-2 10-1' stroke='white' stroke-width='3' fill='none' stroke-linecap='round'/><path d='M7 35c4-3 8-3 12 0s8 3 12 0 7-2 10-1' stroke='%2338e1d4' stroke-width='3' fill='none' stroke-linecap='round'/></svg>">
+</head>
+<body>
+<div class="topbar"><div class="container">
+  <span>Bãi Dài, đảo Coral, Nha Trang &nbsp;·&nbsp; Hotline 24/7: <b>1900 6868</b></span>
+  <span>Ưu đãi: nhập mã <b>AZUREA10</b> giảm 10% khi đặt online</span>
+</div></div>
+
+<nav class="navbar" id="navbar"><div class="container nav-inner">
+  <a class="logo" href="/"><span class="logo-mark" aria-hidden="true"><svg viewBox="0 0 48 48"><defs><linearGradient id="lgSea" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#159a8c"/><stop offset=".55" stop-color="#0b4a6b"/><stop offset="1" stop-color="#021826"/></linearGradient><linearGradient id="lgGold" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#e8cf9a"/><stop offset="1" stop-color="#c9a86a"/></linearGradient></defs><circle cx="24" cy="24" r="23" fill="url(#lgSea)"/><circle cx="15" cy="12" r="7" fill="#ffffff" opacity=".08"/><circle cx="30" cy="14" r="5.5" fill="url(#lgGold)"/><circle cx="30" cy="14" r="8.5" fill="none" stroke="url(#lgGold)" stroke-width="1" opacity=".45"/><path d="M6 27c4.5-3.2 8.5-3.2 13 0s8.5 3.2 13 0 6.5-2.4 10-.8" stroke="#ffffff" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M6 34c4.5-3.2 8.5-3.2 13 0s8.5 3.2 13 0 6.5-2.4 10-.8" stroke="#38e1d4" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M11 41c3.5-2.4 6.5-2.4 10 0s6.5 2.4 10 0 4.5-1.8 7-.8" stroke="url(#lgGold)" stroke-width="2.4" fill="none" stroke-linecap="round" opacity=".9"/></svg></span><span><b>AZUREA</b><small>ISLANDS RESORT</small></span></a>
+  <div class="nav-links">
+    <a href="/">Trang chủ</a>
+    <a href="/phong">Villa & Phòng</a>
+    <a href="/lich-trong">Lịch trống</a>
+    <a href="/tra-cuu">Tra cứu</a>
+    <a href="/gioi-thieu">Giới thiệu</a>
+    <a href="/lien-he">Liên hệ</a>
+    {% if session.get('is_admin') %}<a href="/admin" style="color:#b8860b;font-weight:700">Admin</a>{% endif %}
+  </div>
+  <div style="margin-left:auto;display:flex;gap:.5rem;align-items:center">
+    {% if session.get('user_id') %}
+      <span style="font-size:.88rem">Xin chào, {{ session.get('user_name') }}</span>
+      <a class="btn btn-ghost btn-sm" href="/dang-xuat">Đăng xuất</a>
+    {% else %}
+      <a class="btn btn-ghost btn-sm" href="/dang-nhap">Đăng nhập</a>
+      <a class="btn btn-gold btn-sm" href="/dat-phong/1">Đặt ngay</a>
+    {% endif %}
+  </div>
+</div></nav>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}<div class="container" style="margin-top:1rem">
+  {% for cat,msg in messages %}<div class="alert alert-{{cat}}">{{msg|safe}}</div>{% endfor %}
+</div>{% endif %}{% endwith %}
+
+{% block content %}{% endblock %}
+
+<footer class="footer"><div class="container">
+  <div>
+    <h3 style="color:#fff">AZUREA ISLANDS</h3>
+    <p>Thiên đường nghỉ dưỡng biển và đảo hạng sang — nơi đại dương ôm trọn từng khoảnh khắc của bạn.</p>
+    <p>Bãi Dài, đảo Coral, Nha Trang<br>1900 6868 &nbsp;·&nbsp; hello@azurea.vn</p>
+    <div class="footer-gallery">
+      <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=400&q=70" alt="Biển" loading="lazy">
+      <img src="https://images.unsplash.com/photo-1573843981267-be1999ff37cd?auto=format&fit=crop&w=400&q=70" alt="Đảo" loading="lazy">
+      <img src="https://images.unsplash.com/photo-1540541338287-41700207dee6?auto=format&fit=crop&w=400&q=70" alt="Resort" loading="lazy">
+      <img src="https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=400&q=70" alt="Villa" loading="lazy">
+      <img src="https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=400&q=70" alt="Hồ bơi" loading="lazy">
+      <img src="https://images.unsplash.com/photo-1584132967334-10e028bd69f7?auto=format&fit=crop&w=400&q=70" alt="Biệt thự" loading="lazy">
+    </div>
+  </div>
+  <div><h4 style="color:var(--gold-l)">Khám phá</h4>
+    <p><a href="/phong">Villa & Phòng</a><br><a href="/lich-trong">Lịch trống</a><br><a href="/tra-cuu">Tra cứu đặt phòng</a><br><a href="/gioi-thieu">Về AZUREA</a></p>
+  </div>
+  <div><h4 style="color:var(--gold-l)">Dịch vụ</h4>
+    <p>Tour cano đảo Coral Cay<br>Du thuyền hoàng hôn<br>Spa đá nóng view biển<br>Nhà hàng Ocean Pearl</p>
+  </div>
+  <div><h4 style="color:var(--gold-l)">Nhận ưu đãi</h4>
+    <p>Để lại email để nhận voucher 500K cho kỳ nghỉ đầu tiên.</p>
+    <form onsubmit="event.preventDefault();alert('Cảm ơn bạn! Voucher AZUREA500 đã gửi về email')" style="display:flex;gap:.4rem">
+      <input placeholder="Email của bạn" style="flex:1;padding:.6rem;border-radius:10px;border:0">
+      <button class="btn btn-gold btn-sm">Gửi</button>
+    </form>
+  </div>
+</div>
+<div class="copyright">© 2026 AZUREA ISLANDS Resort · Đồ án Web Đặt Lịch Du Lịch · Flask + SQLite · Chủ đề Đại dương Luxury</div>
+</footer>
+
+<!-- Chatbot Marina -->
+<button id="chat-fab" title="Chat với Marina">Chat</button>
+<div id="chat-box">
+  <div class="chat-head">
+    <div class="avatar">MRN</div>
+    <div><b>Marina — Trợ lý AZUREA</b><br><small style="opacity:.85">Online · trả lời trong vài giây</small></div>
+  </div>
+  <div id="chat-msgs"></div>
+  <form id="chat-form"><input id="chat-input" placeholder="Hỏi giá, lịch trống, cách đặt phòng..." autocomplete="off"><button class="btn btn-navy btn-sm">Gửi</button></form>
+</div>
+
+<div class="lightbox" id="lightbox"><div><img id="lightbox-img" src="" alt="Ảnh phóng to"><small>Bấm ra ngoài để đóng</small></div></div>
+
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

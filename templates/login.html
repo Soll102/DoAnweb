@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Đăng nhập — AZUREA{% endblock %}
+{% block content %}
+<div class="container section" style="max-width:480px">
+<form class="form reveal visible" method="post"><div style="text-align:center"><span class="logo-mark" style="display:inline-grid;width:64px;height:64px" aria-hidden="true"><svg viewBox="0 0 48 48"><defs><linearGradient id="lgSea2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#159a8c"/><stop offset=".55" stop-color="#0b4a6b"/><stop offset="1" stop-color="#021826"/></linearGradient><linearGradient id="lgGold2" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#e8cf9a"/><stop offset="1" stop-color="#c9a86a"/></linearGradient></defs><circle cx="24" cy="24" r="23" fill="url(#lgSea2)"/><circle cx="15" cy="12" r="7" fill="#ffffff" opacity=".08"/><circle cx="30" cy="14" r="5.5" fill="url(#lgGold2)"/><circle cx="30" cy="14" r="8.5" fill="none" stroke="url(#lgGold2)" stroke-width="1" opacity=".45"/><path d="M6 27c4.5-3.2 8.5-3.2 13 0s8.5 3.2 13 0 6.5-2.4 10-.8" stroke="#ffffff" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M6 34c4.5-3.2 8.5-3.2 13 0s8.5 3.2 13 0 6.5-2.4 10-.8" stroke="#38e1d4" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M11 41c3.5-2.4 6.5-2.4 10 0s6.5 2.4 10 0 4.5-1.8 7-.8" stroke="url(#lgGold2)" stroke-width="2.4" fill="none" stroke-linecap="round" opacity=".9"/></svg></span></div><h2 style="text-align:center">Chào mừng trở lại</h2>
+<input type="hidden" name="next" value="{{ request.args.get('next','') }}">
+<label>Email</label><input name="email" type="email" required placeholder="ban@email.com">
+<label>Mật khẩu</label><input name="password" type="password" required placeholder="••••••">
+<button class="btn btn-navy" style="width:100%;justify-content:center;margin-top:.8rem">Đăng nhập</button>
+<p style="text-align:center">Chưa có tài khoản? <a href="/dang-ky">Đăng ký miễn phí</a></p>
+<div class="alert alert-info" style="font-size:.85rem">Tài khoản demo: <b>demo@azurea.vn / demo123</b><br>Quản trị: <b>admin@azurea.vn / admin123</b></div>
+</form></div>
+{% endblock %}
