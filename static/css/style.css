@@ -208,40 +208,7 @@ img{max-width:100%;display:block}
 #chat-form{display:flex;gap:.5rem;padding:.7rem;border-top:1px solid #e3eef2}
 #chat-form input{flex:1;padding:.65rem .85rem;border-radius:999px;border:1.5px solid #d5e5eb}
 
-/* ---------- Ocean glass luxury (trang Giới thiệu) ---------- */
-.ocean-section{position:relative;color:#eaf6f8;overflow:hidden;
-  background:linear-gradient(155deg,#021826 0%,#04263b 40%,#0b4a6b 70%,#0e6b5e 100%)}
-.ocean-section.ocean-alt{background:linear-gradient(200deg,#0b6b5e 0%,#0b4a6b 45%,#021826 100%)}
-.ocean-section::before{content:'';position:absolute;inset:0;pointer-events:none;
-  background:url('https://images.unsplash.com/photo-1439405326854-014607f694d7?auto=format&fit=crop&w=1800&q=60') center/cover;opacity:.16}
-.ocean-hero{position:relative;overflow:hidden;color:#fff;min-height:540px;display:flex;align-items:center}
-.ocean-hero .hero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.ocean-hero .hero-shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(2,24,38,.62),rgba(2,24,38,.30) 45%,#021826 97%)}
-.ocean-hero .container{position:relative;z-index:1;padding:5rem 0 4rem;animation:fadeUp .9s ease both}
-.ocean-hero h1{font-size:clamp(2.4rem,5.5vw,4rem);line-height:1.1;margin:.8rem 0}
-.ocean-hero h1 em{color:var(--gold-l)}
-.ocean-hero .lead{max-width:660px;color:#e6f3f7;font-size:1.08rem}
-.ocean-hero .hero-badges{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1.2rem}
-.ocean-hero .hero-badges span{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.28);padding:.35rem .85rem;border-radius:999px;font-size:.82rem;backdrop-filter:blur(8px)}
-.ocean-section::after{content:'';position:absolute;inset:0;pointer-events:none;
-  background:radial-gradient(600px 300px at 85% 10%,rgba(56,225,212,.18),transparent 60%),radial-gradient(500px 260px at 10% 90%,rgba(201,168,106,.14),transparent 60%)}
-.ocean-section .container{position:relative;z-index:1}
-/* Một background biển liền mạch cho cả trang (thay vì mỗi section 1 ảnh rời) */
-.ocean-page{background-color:#021826;color:#eaf6f8;
-  background-image:linear-gradient(180deg,rgba(2,24,38,.84),rgba(4,38,59,.80) 30%,rgba(11,74,107,.74) 60%,rgba(2,24,38,.88)),url('https://images.unsplash.com/photo-1439405326854-014607f694d7?auto=format&fit=crop&w=1800&q=65');
-  background-size:cover;background-position:center top;background-attachment:fixed}
-.ocean-page .ocean-section{background:transparent}
-.ocean-page .ocean-section::before{display:none}
-.ocean-section h1,.ocean-section h2,.ocean-section h3{color:#fff}
-.ocean-section .kicker{color:var(--gold-l)}
-.ocean-section p,.ocean-section li{color:#d7e9ef}
-.glass-panel{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.22);border-radius:22px;padding:1.8rem;backdrop-filter:blur(14px);box-shadow:0 20px 60px rgba(0,0,0,.35)}
-.glass-card{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);border-radius:18px;overflow:hidden;backdrop-filter:blur(14px);transition:transform .35s cubic-bezier(.16,1,.3,1),background .35s,box-shadow .35s}
-.glass-card:hover{transform:translateY(-8px);background:rgba(255,255,255,.13);box-shadow:0 26px 60px rgba(0,0,0,.45)}
-.glass-card .pad{padding:1.2rem 1.3rem 1.4rem}
-.glass-card h3{color:#fff;margin:.2rem 0 .5rem}
-.glass-card ul{color:#cfe3ec;font-size:.92rem;padding-left:1.1rem;margin:.4rem 0}
-.glass-card .card-img{height:190px}
+/* ---------- Accent dùng chung ---------- */
 .gold-line{width:72px;height:3px;border-radius:99px;background:linear-gradient(90deg,var(--gold),var(--gold-l));margin:.5rem 0 1rem}
 
 .detail-hero{display:grid;grid-template-columns:1.15fr .85fr;gap:1.5rem;align-items:start}

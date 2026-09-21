@@ -1,10 +1,11 @@
 {% extends "base.html" %}
 {% block title %}Giới thiệu — AZUREA{% endblock %}
 {% block content %}
-<div class="ocean-page">
-<header class="ocean-hero">
-  <img class="hero-img" src="https://images.unsplash.com/photo-1502680390469-be75c86b636f?auto=format&fit=crop&w=1800&q=80" alt="Sóng biển xanh ngọc">
-  <div class="hero-shade"></div>
+<header class="hero" style="min-height:560px">
+  <div class="hero-slides">
+    <img src="https://images.unsplash.com/photo-1502680390469-be75c86b636f?auto=format&fit=crop&w=1800&q=80" class="active" alt="Sóng biển xanh ngọc">
+  </div>
+  <div class="hero-overlay"></div>
   <div class="container">
     <span class="eyebrow">AZUREA ISLANDS · Vịnh Coral · Nha Trang</span>
     <h1>Nơi đại dương<br>chạm đến <em>xa xỉ</em></h1>
@@ -17,9 +18,20 @@
   </div>
 </header>
 
-<div class="ocean-section"><div class="container section">
+<svg class="wave-divider" viewBox="0 0 1440 70" preserveAspectRatio="none"><path d="M0,40 C240,80 480,0 720,30 C960,60 1200,10 1440,40 L1440,70 L0,70 Z" fill="#f7fafb"/></svg>
+
+<section class="section" style="padding-top:1rem"><div class="container">
+  <div class="stats-band reveal">
+    <div><b>2003</b><br>Năm thành lập</div>
+    <div><b data-count="{{ n_rooms }}">0</b><br>Hạng villa và suite</div>
+    <div><b>24/7</b><br>Concierge và trợ lý Marina</div>
+    <div><b>15 phút</b><br>Cano ra đảo riêng</div>
+  </div>
+</div></section>
+
+<section class="section" style="padding-top:0"><div class="container">
   <div class="grid2">
-    <div class="reveal visible">
+    <div class="reveal">
       <figure class="feature-photo" style="margin:0;min-height:360px"><img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1200&q=75" alt="Lặn ngắm san hô"><figcaption>Rạn san hô Coral — lặn ngắm ngay trước thềm villa</figcaption></figure>
       <div class="g-grid" style="margin-top:.8rem">
         <div class="g-item"><img src="https://images.unsplash.com/photo-1584132967334-10e028bd69f7?auto=format&fit=crop&w=600&q=70" alt="Villa" loading="lazy"><span>Villa hồ bơi</span></div>
@@ -28,90 +40,107 @@
         <div class="g-item"><img src="https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=600&q=70" alt="Bãi biển" loading="lazy"><span>Bãi Dài</span></div>
       </div>
     </div>
-    <div class="glass-panel reveal visible d1">
+    <div class="card reveal d1"><div class="card-body">
       <div class="kicker">Câu chuyện AZUREA</div>
-      <h2 style="margin-top:.2rem">Khu nghỉ của những giấc mơ biển</h2>
+      <h2 style="margin:.3rem 0 .2rem;color:var(--navy-900)">Khu nghỉ của những giấc mơ biển</h2>
       <div class="gold-line"></div>
-      <p>AZUREA ra đời từ một niềm tin giản dị: kỳ nghỉ tuyệt vời nhất là khi con người được biển ôm trọn. Từ bãi cát trắng Bãi Dài, chúng tôi dựng nên một hòn đảo nghỉ dưỡng nơi mỗi ô cửa đều mở ra sóng xanh, mỗi buổi sáng đều bắt đầu bằng tiếng biển.</p>
-      <p>Hôm nay, AZUREA đón hàng chục nghìn du khách mỗi năm với <b style="color:#fff">{{ n_rooms }} hạng villa</b>, đảo riêng Coral Cay, 3 hồ bơi vô cực và đội ngũ concierge phục vụ 24/7 — cùng triết lý <b style="color:#fff">xa xỉ phải thật tĩnh lặng và tinh tế</b>.</p>
-      <p>Website này là một phần của trải nghiệm đó: đặt phòng trong một phút, lịch trống minh bạch, và trợ lý Marina luôn sẵn sàng — để bạn dành thời gian cho điều duy nhất xứng đáng: biển.</p>
+      <p style="color:var(--muted)">AZUREA ra đời từ một niềm tin giản dị: kỳ nghỉ tuyệt vời nhất là khi con người được biển ôm trọn. Từ bãi cát trắng Bãi Dài, chúng tôi dựng nên một hòn đảo nghỉ dưỡng nơi mỗi ô cửa đều mở ra sóng xanh, mỗi buổi sáng đều bắt đầu bằng tiếng biển.</p>
+      <p style="color:var(--muted)">Hôm nay, AZUREA đón hàng chục nghìn du khách mỗi năm với <b>{{ n_rooms }} hạng villa</b>, đảo riêng Coral Cay, 3 hồ bơi vô cực và đội ngũ concierge phục vụ 24/7 — cùng triết lý <b>xa xỉ phải thật tĩnh lặng và tinh tế</b>.</p>
+      <p style="color:var(--muted)">Website này là một phần của trải nghiệm đó: đặt phòng trong một phút, lịch trống minh bạch, và trợ lý Marina luôn sẵn sàng — để bạn dành thời gian cho điều duy nhất xứng đáng: biển.</p>
       <a class="btn btn-gold" href="/phong">Trải nghiệm đặt phòng</a>
-    </div>
+    </div></div>
   </div>
-</div></div>
+</div></section>
 
-<div class="ocean-section ocean-alt"><div class="container section">
+<section class="section" style="background:linear-gradient(180deg,#eaf6f8,#fff)"><div class="container">
   <div class="section-head reveal"><div><div class="kicker">Tính năng chi tiết</div><h2>Website này làm được những gì?</h2></div></div>
 
   <div class="grid2">
-    <div class="glass-card reveal"><div class="card-img"><img src="https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=800&q=70" alt="Đặt phòng" loading="lazy"><span class="badge gold">01</span></div>
-      <div class="pad"><h3>Đặt phòng trực tuyến</h3>
-        <ul>
+    <div class="card reveal"><div class="card-img"><img src="https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=800&q=70" alt="Đặt phòng" loading="lazy"><span class="badge gold">01</span></div>
+      <div class="card-body"><h3>Đặt phòng trực tuyến</h3>
+        <ul style="color:var(--muted);font-size:.92rem;padding-left:1.1rem">
           <li>{{ n_rooms }} hạng villa, lọc theo tên, hạng, số khách và ngân sách</li>
           <li>Chọn ngày nhận – trả phòng, hệ thống tự tính số đêm và tổng tiền</li>
-          <li>Mã ưu đãi <b style="color:#fff">AZUREA10</b> giảm 10%, chỉ cần cọc 30% để giữ phòng</li>
-          <li>Nhận mã đặt phòng <b style="color:#fff">AZ-XXXXXX</b> sau khi xác nhận thành công</li>
+          <li>Mã ưu đãi <b>AZUREA10</b> giảm 10%, chỉ cần cọc 30% để giữ phòng</li>
+          <li>Nhận mã đặt phòng <b>AZ-XXXXXX</b> sau khi xác nhận thành công</li>
         </ul><a class="btn btn-navy btn-sm" href="/phong">Đặt thử ngay</a></div></div>
 
-    <div class="glass-card reveal d1"><div class="card-img"><img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=70" alt="Lịch trống" loading="lazy"><span class="badge gold">02</span></div>
-      <div class="pad"><h3>Xem lịch trống thời gian thực</h3>
-        <ul>
+    <div class="card reveal d1"><div class="card-img"><img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=70" alt="Lịch trống" loading="lazy"><span class="badge gold">02</span></div>
+      <div class="card-body"><h3>Xem lịch trống thời gian thực</h3>
+        <ul style="color:var(--muted);font-size:.92rem;padding-left:1.1rem">
           <li>Lịch tháng theo từng villa, ô màu vàng là ngày đã kín</li>
-          <li>API <b style="color:#fff">/api/availability</b> trả dữ liệu JSON cho lịch</li>
+          <li>API <b>/api/availability</b> trả dữ liệu JSON cho lịch</li>
           <li>Chống trùng lịch bằng truy vấn overlap trong SQLite</li>
           <li>Nút kiểm tra nhanh trước khi xác nhận đặt phòng</li>
         </ul><a class="btn btn-navy btn-sm" href="/lich-trong">Mở lịch trống</a></div></div>
 
-    <div class="glass-card reveal"><div class="card-img"><img src="https://images.unsplash.com/photo-1540541338287-41700207dee6?auto=format&fit=crop&w=800&q=70" alt="Chatbot Marina" loading="lazy"><span class="badge gold">03</span></div>
-      <div class="pad"><h3>Chatbot Marina 24/7</h3>
-        <ul>
+    <div class="card reveal"><div class="card-img"><img src="https://images.unsplash.com/photo-1540541338287-41700207dee6?auto=format&fit=crop&w=800&q=70" alt="Chatbot Marina" loading="lazy"><span class="badge gold">03</span></div>
+      <div class="card-body"><h3>Chatbot Marina 24/7</h3>
+        <ul style="color:var(--muted);font-size:.92rem;padding-left:1.1rem">
           <li>Trợ lý tiếng Việt ở góc phải màn hình, luôn sẵn sàng</li>
-          <li><b style="color:#fff">Đặt phòng hộ</b> từng bước: chọn villa, ngày, số khách rồi nhận mã AZ-XXXXXX ngay trong chat</li>
-          <li><b style="color:#fff">Gọi nhân viên:</b> để lại tên và SĐT, concierge gọi lại trong 10 phút</li>
-          <li>Hiện <b style="color:#fff">lịch mini 14 ngày</b> ngay trong chat, kiểm tra khoảng ngày và báo giá tức thì</li>
+          <li><b>Đặt phòng hộ</b> từng bước: chọn villa, ngày, số khách rồi nhận mã AZ-XXXXXX ngay trong chat</li>
+          <li><b>Gọi nhân viên:</b> để lại tên và SĐT, concierge gọi lại trong 10 phút</li>
+          <li>Hiện <b>lịch mini 14 ngày</b> ngay trong chat, kiểm tra khoảng ngày và báo giá tức thì</li>
           <li>Trả lời giá phòng, chính sách hủy, tour đảo và ưu đãi (gõ có dấu hay không dấu đều được)</li>
           <li>Nhập mã AZ-XXXXXX để tra cứu đơn ngay trong khung chat</li>
         </ul></div></div>
 
-    <div class="glass-card reveal d1"><div class="card-img"><img src="https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=800&q=70" alt="Tra cứu" loading="lazy"><span class="badge gold">04</span></div>
-      <div class="pad"><h3>Tra cứu và hủy đơn</h3>
-        <ul>
+    <div class="card reveal d1"><div class="card-img"><img src="https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=800&q=70" alt="Tra cứu" loading="lazy"><span class="badge gold">04</span></div>
+      <div class="card-body"><h3>Tra cứu và hủy đơn</h3>
+        <ul style="color:var(--muted);font-size:.92rem;padding-left:1.1rem">
           <li>Tra cứu bằng mã đặt phòng kết hợp SĐT đã đặt</li>
           <li>Người dùng đăng nhập xem toàn bộ lịch sử đặt của mình</li>
           <li>Tự hủy đơn với chính sách hoàn tiền rõ ràng theo số ngày</li>
         </ul><a class="btn btn-navy btn-sm" href="/tra-cuu">Tra cứu đơn</a></div></div>
 
-    <div class="glass-card reveal"><div class="card-img"><img src="https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=70" alt="Đánh giá" loading="lazy"><span class="badge gold">05</span></div>
-      <div class="pad"><h3>Đánh giá và liên hệ</h3>
-        <ul>
+    <div class="card reveal"><div class="card-img"><img src="https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=70" alt="Đánh giá" loading="lazy"><span class="badge gold">05</span></div>
+      <div class="card-body"><h3>Đánh giá và liên hệ</h3>
+        <ul style="color:var(--muted);font-size:.92rem;padding-left:1.1rem">
           <li>Du khách chấm điểm và viết cảm nhận cho từng villa</li>
           <li>Form liên hệ gửi về đội concierge, phản hồi trong 10 phút</li>
           <li>Bản đồ vị trí resort và đầy đủ kênh hotline, Zalo, email</li>
         </ul><a class="btn btn-navy btn-sm" href="/lien-he">Liên hệ</a></div></div>
 
-    <div class="glass-card reveal d1"><div class="card-img"><img src="https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?auto=format&fit=crop&w=800&q=70" alt="Quản trị" loading="lazy"><span class="badge gold">06</span></div>
-      <div class="pad"><h3>Tài khoản và quản trị</h3>
-        <ul>
+    <div class="card reveal d1"><div class="card-img"><img src="https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?auto=format&fit=crop&w=800&q=70" alt="Quản trị" loading="lazy"><span class="badge gold">06</span></div>
+      <div class="card-body"><h3>Tài khoản và quản trị</h3>
+        <ul style="color:var(--muted);font-size:.92rem;padding-left:1.1rem">
           <li>Đăng ký, đăng nhập với mật khẩu mã hóa, phân quyền user và admin</li>
           <li>Dashboard theo dõi doanh thu, tổng đơn và đơn chờ xử lý</li>
           <li>Biểu đồ doanh thu, trạng thái đơn và lượt đặt từng villa</li>
           <li>Duyệt trạng thái đơn, ẩn hoặc hiện villa, xem liên hệ khách hàng</li>
         </ul><a class="btn btn-navy btn-sm" href="/dang-nhap">Đăng nhập thử</a></div></div>
   </div>
-</div></div>
+</div></section>
 
-<div class="ocean-section"><div class="container section">
+<section class="section" style="padding-top:2.5rem"><div class="container">
+  <div class="section-head reveal"><div><div class="kicker">Thư viện đại dương</div><h2>Một vòng quanh đảo</h2></div></div>
+  <div class="marquee reveal d1"><div class="marquee-track">
+    <img src="https://images.unsplash.com/photo-1502680390469-be75c86b636f?auto=format&fit=crop&w=600&q=70" alt="Sóng biển" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=600&q=70" alt="Lặn san hô" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1573843981267-be1999ff37cd?auto=format&fit=crop&w=600&q=70" alt="Đảo Coral" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1584132967334-10e028bd69f7?auto=format&fit=crop&w=600&q=70" alt="Villa hồ bơi" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=600&q=70" alt="Hồ bơi resort" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=600&q=70" alt="Bãi biển" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1502680390469-be75c86b636f?auto=format&fit=crop&w=600&q=70" alt="Sóng biển" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=600&q=70" alt="Lặn san hô" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1573843981267-be1999ff37cd?auto=format&fit=crop&w=600&q=70" alt="Đảo Coral" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1584132967334-10e028bd69f7?auto=format&fit=crop&w=600&q=70" alt="Villa hồ bơi" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=600&q=70" alt="Hồ bơi resort" loading="lazy">
+    <img src="https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=600&q=70" alt="Bãi biển" loading="lazy">
+  </div></div>
+</div></section>
+
+<section class="section" style="padding-top:0"><div class="container">
   <div class="grid2">
-    <div class="glass-panel reveal">
+    <div class="card reveal"><div class="card-body">
       <div class="kicker">Công nghệ</div>
-      <h2>Xây dựng bằng gì?</h2>
+      <h2 style="margin:.3rem 0 .2rem;color:var(--navy-900)">Xây dựng bằng gì?</h2>
       <div class="gold-line"></div>
-      <p><b style="color:#fff">Backend:</b> Python Flask · <b style="color:#fff">Database:</b> SQLite (schema.sql) với 6 bảng users, rooms, bookings, reviews, contacts, chat_logs · <b style="color:#fff">Frontend:</b> HTML, CSS, JS thuần với theme Luxury Ocean · <b style="color:#fff">Bảo mật:</b> session đăng nhập và mã hóa mật khẩu.</p>
-      <p>Toàn bộ website chạy offline sau khi cài 2 gói Flask và Werkzeug, phù hợp thuyết trình đồ án mà không cần hạ tầng phức tạp.</p>
-    </div>
+      <p style="color:var(--muted)"><b>Backend:</b> Python Flask · <b>Database:</b> SQLite (schema.sql) với 6 bảng users, rooms, bookings, reviews, contacts, chat_logs · <b>Frontend:</b> HTML, CSS, JS thuần với theme Luxury Ocean · <b>Bảo mật:</b> session đăng nhập và mã hóa mật khẩu.</p>
+      <p style="color:var(--muted)">Toàn bộ website chạy offline sau khi cài 2 gói Flask và Werkzeug, phù hợp thuyết trình đồ án mà không cần hạ tầng phức tạp.</p>
+    </div></div>
     <figure class="feature-photo reveal d1" style="margin:0;min-height:300px"><img src="https://images.unsplash.com/photo-1584132967334-10e028bd69f7?auto=format&fit=crop&w=1200&q=75" alt="Villa hồ bơi riêng" loading="lazy"><figcaption>Sẵn sàng cho kỳ nghỉ của bạn — đặt phòng chỉ trong 1 phút</figcaption></figure>
   </div>
   <div style="text-align:center;margin-top:1.6rem" class="reveal"><a class="btn btn-gold" href="/phong">Bắt đầu đặt phòng</a></div>
-</div></div>
-</div>
+</div></section>
 {% endblock %}
