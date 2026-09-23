@@ -12,6 +12,7 @@ Chạy:
 """
 import os
 import re
+import json
 import sqlite3
 import random
 import string
@@ -19,15 +20,35 @@ import unicodedata
 from datetime import date, datetime, timedelta
 from functools import wraps
 
+from dotenv import load_dotenv
+
+load_dotenv()  # đọc OPENROUTER_* từ file .env (nếu có)
+
 from flask import Flask, g, render_template, request, redirect, url_for, jsonify, session, flash
 from werkzeug.security import generate_password_hash, check_password_hash
+
+try:
+    import requests
+except ImportError:  # cho phép chạy fallback rule-based khi chưa pip install -r requirements.txt
+    requests = None
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "database.db")
 SCHEMA_PATH = os.path.join(BASE_DIR, "schema.sql")
 
 app = Flask(__name__)
-app.secret_key = "azurea-luxury-ocean-secret-2026"
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "azurea-luxury-ocean-secret-2026")
+
+# ---------- Cấu hình OpenRouter (chatbot AI thật) ----------
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "").strip()
+OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "qwen/qwen3.8-27b:free").strip() or "qwen/qwen3.8-27b:free"
+OPENROUTER_SITE_URL = os.getenv("SITE_URL", "http://127.0.0.1:5000").strip()
+OPENROUTER_APP_NAME = os.getenv("APP_NAME", "AZUREA ISLANDS ").strip()
+
+
+def openrouter_enabled():
+    """Có key + đã cài requests thì mới gọi AI thật, còn không fallback rule-based."""
+    return bool(OPENROUTER_API_KEY) and requests is not None
 
 # ---------- Helpers: DB ----------
 
@@ -740,8 +761,10 @@ def get_chat_session(sid):
             chat_sessions.pop(k, None)
     s = chat_sessions.get(sid)
     if not s:
-        s = {"flow": None, "step": None, "data": {}, "updated": now}
+        s = {"flow": None, "step": None, "data": {}, "updated": now, "history": []}
         chat_sessions[sid] = s
+    if "history" not in s:
+        s["history"] = []
     s["updated"] = now
     return s
 
@@ -1129,6 +1152,227 @@ def handle_contact_flow(sess, text, low, db):
     sess["flow"] = None
     return chatbot_reply(text)
 
+# ---------- Chatbot AI thật qua OpenRouter (Marina) ----------
+# Hybrid: câu hỏi thường + đặt phòng 1 lệnh do AI đảm nhiệm (có DB thật grounding),
+# tra mã AZ-... và các tác vụ cần chính xác tuyệt đối vẫn tra DB trực tiếp.
+# Khi chưa có OPENROUTER_API_KEY → tự fallback về chatbot rule-based cũ.
+
+def build_resort_context(db):
+    """Tóm tắt dữ liệu thật của resort để nhét vào system prompt."""
+    try:
+        rooms = db.execute(
+            "SELECT name, type, price_per_night, capacity FROM rooms WHERE is_active=1 ORDER BY id"
+        ).fetchall()
+        lines = [f"- {r['name']} ({r['type']}) — {vnd(r['price_per_night'])}/đêm, tối đa {r['capacity']}+2 khách"
+                 for r in rooms]
+        room_text = "\n".join(lines) if lines else "- (chưa có dữ liệu phòng)"
+    except Exception:
+        room_text = "- (không đọc được DB)"
+    try:
+        overview_html = avail_overview(db)
+        overview_plain = re.sub(r"<[^>]+>", "", overview_html)
+    except Exception:
+        overview_plain = ""
+    return (f"Hôm nay: {date.today().isoformat()} (định dạng YYYY-MM-DD).\n"
+            f"DANH SÁCH VILLA ĐANG BÁN:\n{room_text}\n\n"
+            f"LỊCH THẬT 7 ĐÊM TỚI:\n{overview_plain[:1200]}\n\n"
+            f"Chính sách: nhận 14:00 / trả 12:00; cọc 30%; hủy trước 7 ngày hoàn 100%, "
+            f"3–7 ngày hoàn 50%, trong 3 ngày không hoàn (được dời 1 lần); mã AZUREA10 giảm 10% online; "
+            f"hotline 1900 6868; địa chỉ Bãi Dài, đảo Coral, Nha Trang.")
+
+
+def build_marina_system_prompt(db, extra_grounding=""):
+    base = (
+        "Bạn là Marina — trợ lý lễ tân của resort AZUREA ISLANDS (Bãi Dài, đảo Coral, Nha Trang). "
+        "Trả lời bằng TIẾNG VIỆT, thân thiện, xưng 'tôi/Marina', gọi khách 'quý khách/bạn'. "
+        "Cho phép dùng HTML đơn giản: <b>, <br>, <a href='...'>.\n\n"
+        "PHẠM VI: bạn CHỈ được tư vấn về resort: phòng/villa, giá, lịch trống, đặt/hủy phòng, "
+        "thanh toán, tour đảo, spa/nhà hàng, địa chỉ, liên hệ. "
+        "Mọi chủ đề ngoài resort (giải bài tập, code, toán, văn, kiến thức chung, chính trị...) "
+        "đều từ chối lịch sự đúng 1 mẫu: "
+        "'Xin lỗi, Marina chỉ hỗ trợ các vấn đề về AZUREA ISLANDS (đặt phòng, giá, lịch trống, tour, ưu đãi). "
+        "Bạn cần hỗ trợ gì về kỳ nghỉ của mình?' — và gợi ý 1 chủ đề resort.\n\n"
+        "ĐẶT PHÒNG 1 LỆNH: nếu khách muốn đặt phòng và ĐÃ cho đủ 7 thông tin "
+        "(tên villa khớp danh sách, ngày nhận, ngày trả, số khách, họ tên, SĐT 9–11 số, email đúng định dạng; "
+        "mã ưu đãi là tùy chọn), bạn XUẤT thêm đúng 1 khối cuối tin nhắn:\n"
+        "<!-- BOOKING_JSON: {\"room_name\": \"...\", \"check_in\": \"YYYY-MM-DD\", \"check_out\": \"YYYY-MM-DD\", "
+        "\"guests\": 2, \"full_name\": \"...\", \"phone\": \"...\", \"email\": \"...\", \"promo\": \"\"} -->\n"
+        "Ngày phải đổi về YYYY-MM-DD (hiểu 'mai', 'mốt', '20/09', '20/09/2026'). "
+        "Nếu THIẾU bất kỳ trường nào thì KHÔNG xuất JSON — hỏi tiếp tự nhiên để lấy đủ, mỗi lần hỏi tối đa 2 trường còn thiếu. "
+        "Không bao giờ bịa mã đặt phòng, không khẳng định chắc chắn còn phòng với ngày xa — backend sẽ kiểm tra DB thật "
+        "trước khi tạo đơn; bạn chỉ ước lượng từ dữ liệu được cấp.\n\n"
+        "DỮ LIỆU RESORT THẬT (lấy từ database, ưu tiên cao nhất):\n"
+        f"{build_resort_context(db)}"
+    )
+    if extra_grounding:
+        base += f"\n\n{extra_grounding}"
+    return base
+
+
+def call_openrouter_api(messages, timeout=30):
+    """Gọi OpenRouter Chat Completions, trả về text. Raise RuntimeError nếu lỗi."""
+    if not OPENROUTER_API_KEY:
+        raise RuntimeError("Chưa cấu hình OPENROUTER_API_KEY trong file .env.")
+    if requests is None:
+        raise RuntimeError("Chưa cài thư viện requests (chạy: pip install -r requirements.txt).")
+    resp = requests.post(
+        "https://openrouter.ai/api/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+            "Content-Type": "application/json",
+            "HTTP-Referer": OPENROUTER_SITE_URL,
+            "X-Title": OPENROUTER_APP_NAME,
+        },
+        json={
+            "model": OPENROUTER_MODEL,
+            "messages": messages,
+            "temperature": 0.7,
+            "max_tokens": 900,
+        },
+        timeout=timeout,
+    )
+    if resp.status_code != 200:
+        detail = resp.text[:500]
+        if resp.status_code == 401:
+            raise RuntimeError("OpenRouter báo 401 — API key sai/thiếu. Kiểm tra OPENROUTER_API_KEY trong .env.")
+        if resp.status_code == 404:
+            raise RuntimeError(f"OpenRouter báo 404 — model '{OPENROUTER_MODEL}' không tồn tại. Đổi OPENROUTER_MODEL trong .env.")
+        if resp.status_code == 429:
+            raise RuntimeError("OpenRouter báo 429 — hết quota/rate-limit của model free. Thử lại sau hoặc đổi model.")
+        raise RuntimeError(f"OpenRouter lỗi {resp.status_code}: {detail}")
+    data = resp.json()
+    try:
+        return (data["choices"][0]["message"]["content"] or "").strip()
+    except (KeyError, IndexError, TypeError):
+        raise RuntimeError(f"OpenRouter trả về không đúng định dạng: {str(data)[:500]}")
+
+
+def extract_booking_json(text):
+    """Móc JSON đặt phòng mà AI xuất ra. Trả về dict hoặc None."""
+    if not text:
+        return None
+    m = re.search(r"BOOKING_JSON\s*:\s*(\{.*?\})\s*-->", text, re.DOTALL)
+    if not m:
+        m = re.search(r"```(?:json)?\s*(\{[^`]*?\"room_name\"[^`]*?\})\s*```", text, re.DOTALL)
+    if not m:
+        return None
+    try:
+        return json.loads(m.group(1))
+    except Exception:
+        return None
+
+
+def try_ai_booking(data, db):
+    """Validate dữ liệu AI trích xuất với DB thật rồi tạo đơn. Trả về (ok, reply_html)."""
+    room_name = (data.get("room_name") or "").strip()
+    room = find_room(db, room_name) if room_name else None
+    if not room:
+        return False, (f"Tôi chưa tìm thấy villa <b>{room_name or '(trống)'}</b> trong hệ thống. "
+                       f"Bạn chọn lại 1 villa trong danh sách nhé (VD: Ocean Pearl Villa).")
+    # Ngày: ưu tiên ISO, fallback parse tiếng Việt
+    def to_date(v):
+        if not v:
+            return None
+        s = str(v).strip()
+        try:
+            return date.fromisoformat(s)
+        except ValueError:
+            return parse_vi_date(s)
+    ci = to_date(data.get("check_in"))
+    co = to_date(data.get("check_out"))
+    if not ci or not co:
+        return False, "Ngày nhận/trả chưa rõ. Bạn cho tôi <b>ngày nhận và ngày trả</b> (VD: 20/10 đến 22/10) nhé!"
+    if co <= ci:
+        return False, "Ngày trả phòng phải <b>sau</b> ngày nhận phòng. Bạn cho lại khoảng ngày nhé!"
+    if ci < date.today():
+        return False, "Ngày nhận phòng phải từ <b>hôm nay</b> trở đi. Bạn chọn ngày khác nhé!"
+    try:
+        guests = int(data.get("guests") or 0)
+    except (ValueError, TypeError):
+        guests = 0
+    if guests < 1 or guests > room["capacity"] + 2:
+        return False, (f"Villa <b>{room['name']}</b> chỉ nhận 1–{room['capacity'] + 2} khách. "
+                       f"Bạn cho tôi lại <b>số khách</b> nhé!")
+    full_name = (data.get("full_name") or "").strip()
+    if len(full_name) < 2:
+        return False, "Bạn cho tôi xin <b>họ tên người đặt</b> nhé!"
+    phone = re.sub(r"\D", "", str(data.get("phone") or ""))
+    if len(phone) < 9 or len(phone) > 11:
+        return False, "SĐT cần 9–11 chữ số. Bạn cho tôi lại <b>số điện thoại</b> nhé!"
+    email = (data.get("email") or "").strip()
+    if not re.match(r"^[\w.\-]+@[\w\-]+(\.[\w\-]+)+$", email):
+        return False, "Email chưa đúng định dạng. Bạn cho tôi lại <b>email</b> để nhận mã đặt phòng nhé!"
+    promo = (data.get("promo") or "").strip().upper()
+    if not is_room_available(room["id"], ci.isoformat(), co.isoformat()):
+        return False, (f"Tiếc quá, <b>{room['name']}</b> từ {fmt_d(ci.isoformat())} đến {fmt_d(co.isoformat())} "
+                       f"đã <b>kín</b>. Bạn chọn khoảng ngày khác hoặc villa khác nhé!")
+    nights = (co - ci).days
+    total = room["price_per_night"] * nights
+    if promo == "AZUREA10":
+        total = int(total * 0.9)
+    code = gen_booking_code()
+    while db.execute("SELECT 1 FROM bookings WHERE booking_code=?", (code,)).fetchone():
+        code = gen_booking_code()
+    note = "Đặt qua chatbot AI Marina (OpenRouter)" + (" (mã AZUREA10)" if promo == "AZUREA10" else "")
+    db.execute("""INSERT INTO bookings (booking_code,user_id,room_id,full_name,phone,email,check_in,check_out,guests,total_price,status,note)
+                  VALUES (?,?,?,?,?,?,?,?,?,?, 'confirmed', ?)""",
+               (code, session.get("user_id"), room["id"], full_name, phone, email,
+                ci.isoformat(), co.isoformat(), guests, total, note))
+    db.commit()
+    promo_line = " (đã trừ 10% mã AZUREA10)" if promo == "AZUREA10" else ""
+    return True, (f"Đặt thành công! Mã của bạn là <b>{code}</b><br>"
+                  f"{room['name']} — {fmt_d(ci.isoformat())} → {fmt_d(co.isoformat())} "
+                  f"({nights} đêm, {guests} khách) — Tổng <b>{vnd(total)}</b>{promo_line}<br>"
+                  f"Chi tiết và hủy đơn tại <a href='/tra-cuu?code={code}'><b>Tra cứu</b></a>. Hẹn gặp bạn giữa biển xanh!")
+
+
+def ai_chat_reply(msg, sess, db, nlow):
+    """Đường AI chính: grounding lịch thật + gọi OpenRouter + xử lý BOOKING_JSON."""
+    # Grounding thêm lịch thật nếu câu hỏi có ngày/phòng để AI khỏi bịa
+    extra = ""
+    try:
+        dates = extract_dates(nlow)
+        room_hit = find_room(db, msg) or match_room_type(db, nlow)
+        if dates or room_hit or any(k in (nlow or "") for k in ("trong", "con phong", "con trong", "lich", "available")):
+            real_reply, _ = avail_answer(db, msg, nlow, None)
+            plain = re.sub(r"<[^>]+>", " ", real_reply)
+            plain = re.sub(r"\s+", " ", plain).strip()
+            if plain:
+                extra = ("[DỮ LIỆU LỊCH THẬT TỪ DATABASE — trả lời lịch trống dựa vào đây, đừng bịa khác]: "
+                         + plain[:1500])
+    except Exception:
+        extra = ""
+    system = build_marina_system_prompt(db, extra)
+    hist = sess.setdefault("history", [])
+    messages = [{"role": "system", "content": system}]
+    messages += hist[-12:]
+    messages.append({"role": "user", "content": msg})
+    ai_text = call_openrouter_api(messages)
+    if not ai_text:
+        raise RuntimeError("OpenRouter trả về rỗng.")
+    booking = extract_booking_json(ai_text)
+    if booking:
+        ok, book_reply = try_ai_booking(booking, db)
+        clean = re.sub(r"<!--\s*BOOKING_JSON:.*?-->", "", ai_text, flags=re.DOTALL).strip()
+        clean = re.sub(r"```(?:json)?\s*\{[^`]*?\"room_name\"[^`]*?\}\s*```", "", clean, flags=re.DOTALL).strip()
+        if ok:
+            reply = book_reply  # đặt 1 lệnh thành công → trả mã đơn luôn
+            suggestions = ["Tra cứu đặt phòng", "Đặt thêm phòng", "Ưu đãi hiện tại"]
+        else:
+            # Thiếu/sai/kín → giữ câu hỏi tiếp của AI (nếu có) + lỗi validate từ DB
+            reply = (clean + f"<br><br>{book_reply}") if clean else book_reply
+            suggestions = ["Đặt phòng giúp tôi", "Lịch trống", "Xem bảng giá"]
+        hist.append({"role": "user", "content": msg[:1000]})
+        hist.append({"role": "assistant", "content": re.sub(r"<[^>]+>", "", reply)[:1500]})
+        sess["history"] = hist[-20:]
+        # strip JSON khỏi text hiển thị (trường hợp đặt thành công clean rỗng thì dùng book_reply)
+        return reply, suggestions
+    hist.append({"role": "user", "content": msg[:1000]})
+    hist.append({"role": "assistant", "content": re.sub(r"<[^>]+>", "", ai_text)[:1500]})
+    sess["history"] = hist[-20:]
+    return ai_text, ["Đặt phòng giúp tôi", "Xem bảng giá", "Lịch trống", "Ưu đãi hiện tại"]
+
+
 # ---------- Chatbot API ----------
 @app.route("/api/chat", methods=["POST"])
 def api_chat():
@@ -1141,53 +1385,94 @@ def api_chat():
     low = msg.lower()
     nlow = norm(msg)
     sess = get_chat_session(sid)
+    reply, suggestions = None, []
 
-    # 1. Đang trong luồng đặt hộ / gọi nhân viên → xử lý theo bước
-    if sess["flow"] in ("booking", "contact"):
-        if is_exit(nlow):
+    # 0. Tra cứu mã AZ-... luôn tra DB thật (không để AI bịa)
+    m_code = re.search(r"AZ-[A-Z0-9]{4,6}", msg.upper())
+    if m_code and ("tra cuu" in nlow or "ma dat" in nlow or "kiem tra don" in nlow
+                   or "don cua toi" in nlow or "booking code" in nlow or True):
+        # Chỉ ưu tiên tra cứu khi câu hỏi có vẻ là tra cứu HOẶC chỉ chứa mã;
+        # tránh cướp các câu đặt phòng 1 lệnh không liên quan (hiếm khi chứa AZ-).
+        looks_like_lookup = ("tra cuu" in nlow or "ma dat" in nlow or "kiem tra" in nlow
+                             or "don cua" in nlow or "az-" in low or len(msg) < 20)
+        if looks_like_lookup and sess.get("flow") not in ("booking", "contact"):
+            code = m_code.group(0)
+            b = db.execute("""
+                SELECT b.*, r.name AS room_name FROM bookings b
+                JOIN rooms r ON r.id=b.room_id WHERE b.booking_code=?
+            """, (code,)).fetchone()
+            if b:
+                reply = (f"Tôi tìm thấy đơn <b>{code}</b>:<br>{b['room_name']}<br>"
+                         f"{b['check_in']} đến {b['check_out']} ({b['guests']} khách)<br>"
+                         f"Tổng: {vnd(b['total_price'])} — Trạng thái: <b>{b['status']}</b><br>"
+                         f"Chi tiết tại <a href='/tra-cuu?code={code}'><b>Tra cứu</b></a>.")
+                suggestions = ["Hủy đơn này", "Đặt thêm"]
+            else:
+                reply = (f"Tôi chưa thấy mã <b>{code}</b> trong hệ thống. Bạn kiểm tra lại giúp tôi nhé, "
+                         f"hoặc tra cứu tại <a href='/tra-cuu'><b>đây</b></a>.")
+                suggestions = ["Liên hệ nhân viên"]
+
+    # 1. Có key OpenRouter → AI thật (đặt 1 lệnh + hỏi đáp + từ chối việc ngoài lề)
+    if reply is None and openrouter_enabled():
+        # AI đảm nhiệm hội thoại tự do; reset luồng rule-based cũ để khỏi kẹt state
+        if sess.get("flow") in ("booking", "contact") and is_exit(nlow):
             sess["flow"] = None
             sess["step"] = None
             sess["data"] = {}
-            reply, suggestions = ("Đã dừng lại. Cần gì bạn cứ nhắn tôi nhé!",
-                                  ["Xem bảng giá", "Lịch trống", "Ưu đãi hiện tại"])
-        elif sess["flow"] == "booking":
-            reply, suggestions = handle_booking_flow(sess, msg, low, db)
-        else:
-            reply, suggestions = handle_contact_flow(sess, msg, low, db)
-    # 2. Bắt đầu luồng đặt hộ (không phân biệt dấu)
-    elif (re.search(r"dat (ho|giup|gium|dum|them)|dat cho|dat phong (cho|giup)|nho dat|book (ho|giup|dum)", nlow)
-          or nlow.strip() in ("dat ho toi", "dat ho", "dat giup toi", "dat gium", "dat them phong")
-          or (re.search(r"dat phong nay|dat villa nay", nlow) and not sess.get("last_room_id"))):
-        reply, suggestions = start_booking_flow(sess, db)
-    # 3. Bắt đầu luồng gọi nhân viên (không phân biệt dấu)
-    elif re.search(r"gap nhan vien|lien he nhan vien|nhan vien (ho tro|tu van|goi)|de lai loi nhan"
-                   r"|nhan (cho nhan vien|ngay|tai day)|goi (lai )?cho toi|tu van vien|gap nguoi that", nlow):
-        reply, suggestions = start_contact_flow(sess)
-    # 4. "Đặt phòng này" ngay sau khi xem lịch → đặt hộ đúng villa đó, khỏi chọn lại
-    elif nlow.strip() in ("dat phong nay", "dat villa nay", "chot villa nay") and sess.get("last_room_id"):
-        room = db.execute("SELECT * FROM rooms WHERE id=? AND is_active=1",
-                          (sess["last_room_id"],)).fetchone()
-        if room is None:
+        try:
+            reply, suggestions = ai_chat_reply(msg, sess, db, nlow)
+        except Exception as e:
+            print(f"[Marina AI] fallback rule-based vì lỗi: {e}")
+            reply, suggestions = None, []
+
+    # 2. Fallback: luồng rule-based cũ (khi chưa có key hoặc AI lỗi)
+    if reply is None:
+        # 2a. Đang trong luồng đặt hộ / gọi nhân viên → xử lý theo bước
+        if sess["flow"] in ("booking", "contact"):
+            if is_exit(nlow):
+                sess["flow"] = None
+                sess["step"] = None
+                sess["data"] = {}
+                reply, suggestions = ("Đã dừng lại. Cần gì bạn cứ nhắn tôi nhé!",
+                                      ["Xem bảng giá", "Lịch trống", "Ưu đãi hiện tại"])
+            elif sess["flow"] == "booking":
+                reply, suggestions = handle_booking_flow(sess, msg, low, db)
+            else:
+                reply, suggestions = handle_contact_flow(sess, msg, low, db)
+        # 2b. Bắt đầu luồng đặt hộ (không phân biệt dấu)
+        elif (re.search(r"dat (ho|giup|gium|dum|them)|dat cho|dat phong (cho|giup)|nho dat|book (ho|giup|dum)", nlow)
+              or nlow.strip() in ("dat ho toi", "dat ho", "dat giup toi", "dat gium", "dat them phong")
+              or (re.search(r"dat phong nay|dat villa nay", nlow) and not sess.get("last_room_id"))):
             reply, suggestions = start_booking_flow(sess, db)
+        # 2c. Bắt đầu luồng gọi nhân viên (không phân biệt dấu)
+        elif re.search(r"gap nhan vien|lien he nhan vien|nhan vien (ho tro|tu van|goi)|de lai loi nhan"
+                       r"|nhan (cho nhan vien|ngay|tai day)|goi (lai )?cho toi|tu van vien|gap nguoi that", nlow):
+            reply, suggestions = start_contact_flow(sess)
+        # 2d. "Đặt phòng này" ngay sau khi xem lịch → đặt hộ đúng villa đó, khỏi chọn lại
+        elif nlow.strip() in ("dat phong nay", "dat villa nay", "chot villa nay") and sess.get("last_room_id"):
+            room = db.execute("SELECT * FROM rooms WHERE id=? AND is_active=1",
+                              (sess["last_room_id"],)).fetchone()
+            if room is None:
+                reply, suggestions = start_booking_flow(sess, db)
+            else:
+                sess["flow"] = "booking"
+                sess["step"] = "checkin"
+                sess["data"] = {"room_id": room["id"], "room_name": room["name"],
+                                "price": room["price_per_night"], "capacity": room["capacity"]}
+                reply = (f"Chốt <b>{room['name']}</b> — {vnd(room['price_per_night'])}/đêm.<br>"
+                         f"Bạn <b>nhận phòng ngày nào</b>? (VD: 20/09, hoặc gõ 'mai')")
+                suggestions = ["Hủy"]
+        # 2e. Hỏi về đặt phòng chung chung → mời chọn đặt hộ hoặc tự đặt
+        elif "huong dan" in nlow and "dat" in nlow:
+            reply, suggestions = chatbot_reply(msg, sess)
+        elif "dat ban" not in nlow and "tra cuu" not in nlow and "dat nuoc" not in nlow and re.search(
+                r"dat phong|dat lich|book|booking|cach dat|\bdat\b", nlow):
+            reply, suggestions = ("Bạn muốn tôi <b>đặt hộ luôn</b> ngay trong khung chat này, "
+                                  "hay xem hướng dẫn để tự đặt trên web?",
+                                  ["Đặt hộ tôi", "Xem hướng dẫn tự đặt"])
+        # 2f. Hỏi đáp thường
         else:
-            sess["flow"] = "booking"
-            sess["step"] = "checkin"
-            sess["data"] = {"room_id": room["id"], "room_name": room["name"],
-                            "price": room["price_per_night"], "capacity": room["capacity"]}
-            reply = (f"Chốt <b>{room['name']}</b> — {vnd(room['price_per_night'])}/đêm.<br>"
-                     f"Bạn <b>nhận phòng ngày nào</b>? (VD: 20/09, hoặc gõ 'mai')")
-            suggestions = ["Hủy"]
-    # 5. Hỏi về đặt phòng chung chung → mời chọn đặt hộ hoặc tự đặt
-    elif "huong dan" in nlow and "dat" in nlow:
-        reply, suggestions = chatbot_reply(msg, sess)
-    elif "dat ban" not in nlow and "tra cuu" not in nlow and "dat nuoc" not in nlow and re.search(
-            r"dat phong|dat lich|book|booking|cach dat|\bdat\b", nlow):
-        reply, suggestions = ("Bạn muốn tôi <b>đặt hộ luôn</b> ngay trong khung chat này, "
-                              "hay xem hướng dẫn để tự đặt trên web?",
-                              ["Đặt hộ tôi", "Xem hướng dẫn tự đặt"])
-    # 6. Hỏi đáp thường
-    else:
-        reply, suggestions = chatbot_reply(msg, sess)
+            reply, suggestions = chatbot_reply(msg, sess)
 
     try:
         db.execute("INSERT INTO chat_logs (session_id,user_msg,bot_reply) VALUES (?,?,?)",
