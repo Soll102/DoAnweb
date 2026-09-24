@@ -12,7 +12,8 @@
   {% if result %}
   <div class="card reveal visible" style="margin-top:1rem"><div class="card-body">
     <h3>Đơn {{ result['booking_code'] }} — <span class="pill {{ result['status'] }}">{{ result['status'] }}</span></h3>
-    <p><b>{{ result['room_name'] }}</b> · {{ result['check_in'] }} đến {{ result['check_out'] }} · {{ result['guests'] }} khách<br>{{ result['full_name'] }} · {{ result['phone'] }}<br>Tổng: <b>{{ result['total_price']|vnd }}</b></p>
+    <p><b>{{ result['room_name'] }}</b> · {{ result['check_in'] }} đến {{ result['check_out'] }} · {{ result['guests'] }} khách<br>
+    {% if verified %}{{ result['full_name'] }} · {{ result['phone'] }}{% else %}{{ result['full_name']|mask_name }} · {{ result['phone']|mask_phone }}<br><small>Nhập SĐT lúc đặt để xem đầy đủ thông tin và mở khóa hủy đơn.</small>{% endif %}<br>Tổng: <b>{{ result['total_price']|vnd }}</b></p>
     {% if result['status'] != 'cancelled' %}
     <form action="/huy-dat-phong/{{ result['booking_code'] }}" method="post" style="display:flex;gap:.5rem" onsubmit="return confirm('Bạn chắc chắn muốn hủy đơn này?')">
       <input name="phone" placeholder="Nhập lại SĐT để xác nhận hủy" required style="flex:1;padding:.6rem;border-radius:10px;border:1.5px solid #dbe7ed">

@@ -73,6 +73,40 @@ def vnd(n):
 
 app.jinja_env.filters["vnd"] = vnd
 
+# ---------- Bảo mật PII: che họ tên / SĐT / email khi chưa xác thực ----------
+def mask_name(name):
+    parts = (name or "").split()
+    if not parts:
+        return "***"
+    return parts[0] + " ***"
+
+def mask_phone(phone):
+    digits = re.sub(r"\D", "", phone or "")
+    if len(digits) < 3:
+        return "***"
+    return "*" * (len(digits) - 3) + digits[-3:]
+
+def mask_email(email):
+    e = (email or "").strip()
+    if "@" not in e:
+        return "***"
+    local, domain = e.split("@", 1)
+    if not local:
+        return "***@" + domain
+    return local[0] + "***@" + domain
+
+app.jinja_env.filters["mask_name"] = mask_name
+app.jinja_env.filters["mask_phone"] = mask_phone
+app.jinja_env.filters["mask_email"] = mask_email
+
+def extract_phone(text):
+    """Móc SĐT VN (đầu 0, 9–11 số, cho phép cách/dấu chấm) trong câu chat, bỏ qua ngày tháng."""
+    for m in re.finditer(r"(?<!\d)0[\d\s\.]{7,14}(?!\d)", text or ""):
+        digits = re.sub(r"\D", "", m.group())
+        if digits.startswith("0") and 9 <= len(digits) <= 11:
+            return digits
+    return None
+
 def gen_booking_code():
     return "AZ-" + "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
 
@@ -252,14 +286,19 @@ def chatbot_reply(message: str, ctx=None):
         m = re.search(r"AZ-[A-Z0-9]{4,6}", message.upper())
         if m:
             code = m.group(0)
+            phone = extract_phone(message)
+            if not phone:
+                return ("Để bảo mật thông tin, bạn gửi thêm <b>SĐT lúc đặt phòng</b> kèm mã "
+                        f"<b>{code}</b> giúp tôi nhé (VD: '{code} SĐT 0901234567')."), ["Tra cứu đặt phòng"]
             b = db.execute("""
                 SELECT b.*, r.name AS room_name FROM bookings b
-                JOIN rooms r ON r.id=b.room_id WHERE b.booking_code=?
-            """, (code,)).fetchone()
+                JOIN rooms r ON r.id=b.room_id WHERE b.booking_code=? AND b.phone=?
+            """, (code, phone)).fetchone()
             if b:
                 return (f"Tôi tìm thấy đơn <b>{code}</b>:<br>{b['room_name']}<br>{b['check_in']} đến {b['check_out']} ({b['guests']} khách)<br>"
                         f"Tổng: {vnd(b['total_price'])} — Trạng thái: <b>{b['status']}</b><br>Chi tiết tại <a href='/tra-cuu?code={code}'><b>Tra cứu</b></a>."), ["Hủy đơn này", "Đặt thêm"]
-            return (f"Tôi chưa thấy mã <b>{code}</b> trong hệ thống. Bạn kiểm tra lại giúp tôi nhé, hoặc tra cứu tại <a href='/tra-cuu'><b>đây</b></a>."), ["Liên hệ nhân viên"]
+            return ("Tôi chưa thấy đơn nào khớp mã + SĐT này. Bạn kiểm tra lại giúp tôi nhé, "
+                    "hoặc tra cứu tại <a href='/tra-cuu'><b>đây</b></a>."), ["Liên hệ nhân viên"]
         return ("Bạn gửi tôi <b>mã đặt phòng (dạng AZ-XXXXXX)</b> để tôi tra cứu giúp nhé! Hoặc mở <a href='/tra-cuu'><b>Tra cứu đặt phòng</b></a>."), ["Tra cứu đặt phòng"]
 
     # fallback
@@ -615,6 +654,7 @@ def booking_success(code):
 @app.route("/tra-cuu", methods=["GET", "POST"])
 def lookup():
     result = None
+    verified = False  # đã xác thực SĐT/chính chủ → mới hiện đầy đủ họ tên + SĐT
     code = request.args.get("code", "") or request.form.get("code", "")
     phone = request.form.get("phone", "")
     if request.method == "POST" or code:
@@ -624,19 +664,26 @@ def lookup():
                                    WHERE b.booking_code=? AND b.phone=?""", (code.strip().upper(), phone.strip())).fetchone()
             if not result:
                 flash("Không tìm thấy đơn khớp mã + SĐT. Kiểm tra lại giúp bạn nhé!", "warning")
+            else:
+                verified = True
         else:
             rows = db.execute("""SELECT b.*, r.name AS room_name FROM bookings b JOIN rooms r ON r.id=b.room_id
                                  WHERE b.booking_code=?""", (code.strip().upper(),)).fetchall()
             result = rows[0] if rows else None
             if not result and code:
                 flash("Không tìm thấy mã đặt phòng này.", "warning")
+            elif result:
+                # Chính chủ (đơn của tài khoản đang đăng nhập) hoặc admin → coi như đã xác thực
+                u = current_user()
+                if u and (u["is_admin"] or u["id"] == result["user_id"]):
+                    verified = True
     # danh sách của user đang đăng nhập
     mine = []
     if "user_id" in session:
         db = get_db()
         mine = db.execute("""SELECT b.*, r.name AS room_name FROM bookings b JOIN rooms r ON r.id=b.room_id
                              WHERE b.user_id=? ORDER BY b.created_at DESC""", (session["user_id"],)).fetchall()
-    return render_template("lookup.html", result=result, mine=mine, code=code)
+    return render_template("lookup.html", result=result, mine=mine, code=code, verified=verified)
 
 @app.route("/huy-dat-phong/<code>", methods=["POST"])
 def cancel_booking(code):
@@ -1192,6 +1239,10 @@ def build_marina_system_prompt(db, extra_grounding=""):
         "đều từ chối lịch sự đúng 1 mẫu: "
         "'Xin lỗi, Marina chỉ hỗ trợ các vấn đề về AZUREA ISLANDS (đặt phòng, giá, lịch trống, tour, ưu đãi). "
         "Bạn cần hỗ trợ gì về kỳ nghỉ của mình?' — và gợi ý 1 chủ đề resort.\n\n"
+        "BẢO MẬT: không bao giờ tiết lộ họ tên, SĐT, email của bất kỳ khách nào khác; "
+        "không liệt kê hay đoán thông tin đơn đặt phòng của người khác. "
+        "Khi khách tra cứu đơn, chỉ xác nhận chi tiết khi họ cung cấp đúng MÃ ĐƠN + SĐT lúc đặt; "
+        "mọi câu trả lời về lịch chỉ ở mức trống/kín, không kèm tên khách.\n\n"
         "ĐẶT PHÒNG 1 LỆNH: nếu khách muốn đặt phòng và ĐÃ cho đủ 7 thông tin "
         "(tên villa khớp danh sách, ngày nhận, ngày trả, số khách, họ tên, SĐT 9–11 số, email đúng định dạng; "
         "mã ưu đãi là tùy chọn), bạn XUẤT thêm đúng 1 khối cuối tin nhắn:\n"
@@ -1387,30 +1438,36 @@ def api_chat():
     sess = get_chat_session(sid)
     reply, suggestions = None, []
 
-    # 0. Tra cứu mã AZ-... luôn tra DB thật (không để AI bịa)
+    # 0. Tra cứu mã AZ-... luôn tra DB thật (không để AI bịa).
+    # Bảo mật: chỉ tiết lộ khi khách cho đúng MÃ + SĐT lúc đặt.
     m_code = re.search(r"AZ-[A-Z0-9]{4,6}", msg.upper())
-    if m_code and ("tra cuu" in nlow or "ma dat" in nlow or "kiem tra don" in nlow
-                   or "don cua toi" in nlow or "booking code" in nlow or True):
+    if m_code:
         # Chỉ ưu tiên tra cứu khi câu hỏi có vẻ là tra cứu HOẶC chỉ chứa mã;
         # tránh cướp các câu đặt phòng 1 lệnh không liên quan (hiếm khi chứa AZ-).
         looks_like_lookup = ("tra cuu" in nlow or "ma dat" in nlow or "kiem tra" in nlow
                              or "don cua" in nlow or "az-" in low or len(msg) < 20)
         if looks_like_lookup and sess.get("flow") not in ("booking", "contact"):
             code = m_code.group(0)
-            b = db.execute("""
-                SELECT b.*, r.name AS room_name FROM bookings b
-                JOIN rooms r ON r.id=b.room_id WHERE b.booking_code=?
-            """, (code,)).fetchone()
-            if b:
-                reply = (f"Tôi tìm thấy đơn <b>{code}</b>:<br>{b['room_name']}<br>"
-                         f"{b['check_in']} đến {b['check_out']} ({b['guests']} khách)<br>"
-                         f"Tổng: {vnd(b['total_price'])} — Trạng thái: <b>{b['status']}</b><br>"
-                         f"Chi tiết tại <a href='/tra-cuu?code={code}'><b>Tra cứu</b></a>.")
-                suggestions = ["Hủy đơn này", "Đặt thêm"]
+            phone = extract_phone(msg)
+            if not phone:
+                reply = ("Để bảo mật thông tin, bạn gửi thêm <b>SĐT lúc đặt phòng</b> kèm mã "
+                         f"<b>{code}</b> giúp tôi nhé (VD: '{code} SĐT 0901234567').")
+                suggestions = ["Tra cứu đặt phòng"]
             else:
-                reply = (f"Tôi chưa thấy mã <b>{code}</b> trong hệ thống. Bạn kiểm tra lại giúp tôi nhé, "
-                         f"hoặc tra cứu tại <a href='/tra-cuu'><b>đây</b></a>.")
-                suggestions = ["Liên hệ nhân viên"]
+                b = db.execute("""
+                    SELECT b.*, r.name AS room_name FROM bookings b
+                    JOIN rooms r ON r.id=b.room_id WHERE b.booking_code=? AND b.phone=?
+                """, (code, phone)).fetchone()
+                if b:
+                    reply = (f"Tôi tìm thấy đơn <b>{code}</b>:<br>{b['room_name']}<br>"
+                             f"{b['check_in']} đến {b['check_out']} ({b['guests']} khách)<br>"
+                             f"Tổng: {vnd(b['total_price'])} — Trạng thái: <b>{b['status']}</b><br>"
+                             f"Chi tiết tại <a href='/tra-cuu?code={code}'><b>Tra cứu</b></a>.")
+                    suggestions = ["Hủy đơn này", "Đặt thêm"]
+                else:
+                    reply = ("Tôi chưa thấy đơn nào khớp mã + SĐT này. Bạn kiểm tra lại giúp tôi nhé, "
+                             "hoặc tra cứu tại <a href='/tra-cuu'><b>đây</b></a>.")
+                    suggestions = ["Liên hệ nhân viên"]
 
     # 1. Có key OpenRouter → AI thật (đặt 1 lệnh + hỏi đáp + từ chối việc ngoài lề)
     if reply is None and openrouter_enabled():

@@ -6,7 +6,7 @@
   <div class="card reveal visible"><div class="card-body" style="text-align:center;padding:2.5rem">
     <div style="width:72px;height:72px;margin:0 auto;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#dcfce7,#a7f3d0);font-weight:800;color:#166534;font-size:1.6rem">OK</div>
     <h1>Đặt phòng thành công</h1>
-    <p>Cảm ơn <b>{{ b['full_name'] }}</b>! AZUREA đã giữ chỗ cho bạn giữa biển xanh. Mã đặt phòng:</p>
+    <p>Cảm ơn <b>{{ b['full_name']|mask_name }}</b>! AZUREA đã giữ chỗ cho bạn giữa biển xanh. Mã đặt phòng:</p>
     <div style="font-size:2rem;font-weight:800;letter-spacing:3px;color:var(--navy-900);background:#f0f8f9;border:2px dashed var(--gold);border-radius:14px;padding:.8rem">{{ b['booking_code'] }}</div>
     <table class="table" style="margin-top:1.2rem;text-align:left">
       <tr><th>Villa</th><td>{{ b['room_name'] }}</td></tr>
@@ -14,7 +14,7 @@
       <tr><th>Tổng thanh toán</th><td><b style="color:#a07c2c">{{ b['total_price']|vnd }}</b> (cọc 30% = {{ (b['total_price']*0.3)|round|int|vnd }})</td></tr>
       <tr><th>Trạng thái</th><td><span class="pill {{ b['status'] }}">{{ b['status'] }}</span></td></tr>
     </table>
-    <p style="color:var(--muted);font-size:.9rem">Xác nhận đã gửi về {{ b['email'] }} · Vui lòng chụp lại mã này để làm thủ tục nhận phòng.<br>Chi tiết chuyển khoản cọc: liên hệ hotline <b>1900 6868</b>.</p>
+    <p style="color:var(--muted);font-size:.9rem">Xác nhận đã gửi về {{ b['email']|mask_email }} · Vui lòng chụp lại mã này để làm thủ tục nhận phòng.<br>Chi tiết chuyển khoản cọc: liên hệ hotline <b>1900 6868</b>.</p>
     <div style="display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap"><a class="btn btn-navy" href="/tra-cuu?code={{ b['booking_code'] }}">Tra cứu đơn</a><a class="btn btn-ghost" href="/">Về trang chủ</a></div>
   </div></div>
 </div>
